@@ -8,7 +8,7 @@ def analizador_lexico(programa):
         'entero', 
         'real', 
         'booleano', 
-        'Caracter', 
+        'caracter', 
         'cadena', 
         'verdadero',
         'falso',
@@ -21,17 +21,33 @@ def analizador_lexico(programa):
         'o', 
         'mod',
         'caso',
-        
-
+        'mientras',
+        'haga',
+        'repita',
+        'hasta',
+        'para',
+        'procedimiento',
+        'var',
+        'retorne',
+        'funcion',
+        'nueva_linea',
+        'registro',
+        'arreglo',
+        'de',
+        'entonces'
 
         }
     tokens = [
-        ('ENTERO', r'\d+'),
-        ('SUMA', r'\+'),
-        ('RESTA', r'-'),
-        ('MULTIPLICACION', r'\*'),
-        ('DIVISION', r'/'),
-        ('ESPACIO', r'\s+'),
+        ('tkn_integer',   r'\d*'),  
+        ('tkn_real',   r'\d+(\.\d*)?'),  
+        ('tkn_assign',   r'<-'),                      
+        ('id',       r'[A-Za-z]+'),    
+        ('tkn_str',       r'[A-Za-z]+'),   
+        ('tkn_period',       r'.'),      
+        ('tkn_comma',       r','), 
+        ('tkn_colon',       r':'), 
+        ('tkn_closing_bra',       r']'), 
+        ('tkn_opening_bra',       r'['), 
     ]
     resultado = []
     posicion = 0
