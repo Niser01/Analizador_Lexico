@@ -54,7 +54,7 @@ def analizador_lexico(programa):
     return resultado
 
 if __name__ == "__main__":
-    # Ejemplo de uso del analizador léxico
+
     codigo = '3 + 5 * 2 - 1'
     tokens = analizador_lexico(codigo)
     print(tokens)
