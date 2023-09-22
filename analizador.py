@@ -46,8 +46,8 @@ def analizador_lexico(frase):
         ('tkn_real',   r'\d+(\.\d*)?'), 
         ('tkn_integer',   r'[0-9]'),           
         ('tkn_assign',   r'<-'),                      
-        ('id',       r'[A-Za-z]+'),    
-        ('tkn_str',       r'\" + [A-Za-z] + \"'),   
+        ('id',       r'[A-Za-z_0-9]+'),    
+        ('tkn_str',       r'["A-Za-z_0-9"]'),   
         ('tkn_period',       r'\.'),      
         ('tkn_comma',       r'\,'), 
         ('tkn_colon',       r'\:'), 
@@ -66,7 +66,10 @@ def analizador_lexico(frase):
         ('tkn_leq',       r'<='), 
         ('tkn_greater',       r'\>'), 
         ('tkn_geq',       r'>='), 
-
+        ('tkn_char',       r"['\w*']+"), 
+        ('skip',     r'[ \t]+'), 
+        ('newline',  r'\n'),
+        ('NiF', r'.'),
     ]
     
     generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
@@ -76,29 +79,35 @@ def analizador_lexico(frase):
     for mo in re.finditer(generadorPatrones, frase):
         token_type = mo.lastgroup
         token_value = mo.group()
+
         column = (mo.start()+1) - line_start
         if(token_type == 'id' and token_value in palabrasReservadas):
             token_type=token_value
             print(f"<{token_value}, {line_num}, {column}>")
+        elif token_type == 'newline':
+            line_start = mo.end()
+            line_num += 1
+            continue
+        elif token_type == 'skip':
+            continue
+        elif token_type == 'NiF':
+            print(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
+            return None
         else:
             print(f"<{token_type}, {token_value}, {line_num}, {column}>")
+         
+    
+    
         
         
-
-
-
 
 
 if __name__ == "__main__":
 
-    frase = '''lea entero o real
-
-   y
- Escriba nueva_linea haga
-
-   mientRAs repita
-
-        Entonces'''
+    frase = '''my_Var1 <- 02
+my_Var2 <- -3.145
+string <- "Hello world" 
+char <- 'a' '''
     for token in analizador_lexico(frase):
         print(token)
   
