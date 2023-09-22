@@ -9,16 +9,10 @@ class Token(NamedTuple):
     column: int
 
 def analizador_lexico(frase):
-    # Como el lenguaje no discrimina entre mayusulas y minusculas, se pasa todo a minusculas para facilitar el proceso
-    # frase = frase.lower()
-
 
     palabras_reservadas = {'inicio', 'fin', 'entero', 'real', 'booleano', 'caracter', 'cadena', 'verdadero', 'falso', 'escriba', 'lea', 'llamar',
         'si', 'sino', 'y', 'o', 'mod', 'caso', 'mientras', 'haga', 'repita', 'hasta', 'para', 'procedimiento', 'var', 'retorne', 'funcion', 'nueva_linea',
-        'registro', 'arreglo', 'de', 'entonces', 
-        #'tkn_period', 'tkn_comma', 'tkn_colon', 'tkn_closing_bra', 'tkn_opening_bra',   
-        #'tkn_closing_par', 'tkn_opening_par', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_equal', 'tkn_neq', 'tkn_less',     
-        #'tkn_leq', 'tkn_greater', 'tkn_geq', 'tkn_assign'       
+        'registro', 'arreglo', 'de', 'entonces',     
         }
     tokens = [
         ('one_line_comment', r'\/\/.*'),
