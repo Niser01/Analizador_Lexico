@@ -1,6 +1,10 @@
 import re as re
 
-def analizador_lexico(programa):
+def analizador_lexico(frase):
+    token_type: str
+    token_value: str
+    line: int
+    column: int
 
     palabrasReservadas = {
         'inicio', 
@@ -35,44 +39,59 @@ def analizador_lexico(programa):
         'arreglo',
         'de',
         'entonces'
-
         }
     tokens = [
-        ('tkn_integer',   r'\d*'),  
-        ('tkn_real',   r'\d+(\.\d*)?'),  
+        ('tkn_real',   r'\d+(\.\d*)?'), 
+        ('tkn_integer',   r'[0-9]'),           
         ('tkn_assign',   r'<-'),                      
         ('id',       r'[A-Za-z]+'),    
-        ('tkn_str',       r'[A-Za-z]+'),   
-        ('tkn_period',       r'.'),      
-        ('tkn_comma',       r','), 
-        ('tkn_colon',       r':'), 
-        ('tkn_closing_bra',       r']'), 
-        ('tkn_opening_bra',       r'['), 
+        ('tkn_str',       r'\" + [A-Za-z] + \"'),   
+        ('tkn_period',       r'\.'),      
+        ('tkn_comma',       r'\,'), 
+        ('tkn_colon',       r'\:'), 
+        ('tkn_closing_bra',       r'\]'), 
+        ('tkn_opening_bra',       r'\['), 
+        ('tkn_closing_par',       r'\)'), 
+        ('tkn_opening_par',       r'\('), 
+        ('tkn_plus',       r'\+'), 
+        ('tkn_minus',       r'\-'), 
+        ('tkn_times',       r'\*'), 
+        ('tkn_div',       r'\/'), 
+        ('tkn_power',       r'\^'), 
+        ('tkn_equal',       r'\='), 
+        ('tkn_neq',       r'<>'), 
+        ('tkn_less',       r'\<'), 
+        ('tkn_leq',       r'<='), 
+        ('tkn_greater',       r'\>'), 
+        ('tkn_geq',       r'>='), 
+
     ]
-    resultado = []
+    
+    generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
+    line_num = 1
+    line_start = 0
     posicion = 0
 
-    while posicion < len(programa):
-        coincidio = False
-        for nombre_token, patron in tokens:
-            regex = re.compile(patron)
-            match = regex.match(programa, posicion)
-            if match:
-                valor = match.group(0)
-                if nombre_token != 'ESPACIO':
-                    resultado.append((nombre_token, valor))
-                posicion = match.end()
-                coincidio = True
-                break
-        if not coincidio:
-            raise Exception('Error: Token no válido en la posición {}'.format(posicion))
-    
-    return resultado
+    while posicion < len(frase):
+        mo = re.finditer(generadorPatrones, frase)
+        token_type = mo.lastgroup
+        token_value = mo.group()
+        column = (mo.start()+1) - line_start
+        print(f"<{token_type}, {token_value}, {line_num}, {column}>")
+
+
 
 if __name__ == "__main__":
 
-    codigo = '3 + 5 * 2 - 1'
-    tokens = analizador_lexico(codigo)
-    print(tokens)
+    frase = '''lea entero o real
+
+   y
+ Escriba nueva_linea haga
+
+   mientRAs repita
+
+        Entonces'''
+    for token in analizador_lexico(frase):
+        print(token)
   
 
