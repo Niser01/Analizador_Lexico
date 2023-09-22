@@ -1,13 +1,17 @@
-import re as re
+from typing import NamedTuple
+import re
 import sys
 
-def analizador_lexico(frase):
-    # Como el lenguaje no discrimina entre mayusulas y minusculas, se pasa todo a minusculas para facilitar el proceso
-    frase = frase.lower()
+class Token(NamedTuple):
     token_type: str
     token_value: str
     line: int
     column: int
+
+def analizador_lexico(frase):
+    # Como el lenguaje no discrimina entre mayusulas y minusculas, se pasa todo a minusculas para facilitar el proceso
+    frase = frase.lower()
+
 
     palabras_reservadas = {'inicio', 'fin', 'entero', 'real', 'booleano', 'caracter', 'cadena', 'verdadero', 'falso', 'escriba', 'lea', 'llamar',
         'si', 'sino', 'y', 'o', 'mod', 'caso', 'mientras', 'haga', 'repita', 'hasta', 'para', 'procedimiento', 'var', 'retorne', 'funcion', 'nueva_linea',
@@ -16,6 +20,7 @@ def analizador_lexico(frase):
         'tkn_leq', 'tkn_greater', 'tkn_geq', 'tkn_assign'       
         }
     tokens = [
+        ('comment', r'^((/\*[\s\S]*\*/)|//.*)'),
         ('tkn_real', r'\d+(\.\d*)?'), 
         ('tkn_integer', r'[0-9]'),           
         ('tkn_assign', r'<-'),                      
@@ -43,6 +48,7 @@ def analizador_lexico(frase):
         ('skip', r'[ \t]+'), 
         ('newline', r'\n'),
         ('NiF', r'.'),
+        
     ]
     
     generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
@@ -52,13 +58,14 @@ def analizador_lexico(frase):
     for mo in re.finditer(generadorPatrones, frase):
         token_type = mo.lastgroup
         token_value = mo.group()
-
         column = (mo.start()+1) - line_start
         if((token_type == 'id' and token_value in palabras_reservadas)):
             token_type=token_value
-            print(f"<{token_value}, {line_num}, {column}>")
+            print(f"<{token_value},{line_num},{column}>")
+            continue
         elif (token_type in palabras_reservadas):
-            print(f"<{token_type}, {line_num}, {column}>")
+            print(f"<{token_type},{line_num},{column}>")
+            continue
         elif token_type == 'newline':
             line_start = mo.end()
             line_num += 1
@@ -66,32 +73,28 @@ def analizador_lexico(frase):
         elif token_type == 'skip':
             continue
         elif token_type == 'NiF':
-            print(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
+            print(f'>>> Error lexico (linea:{line_num},posicion:{column})')
             return None
         else:
             if(token_type == 'tkn_char'):
-                print(f"<{token_type}, {token_value[1]}, {line_num}, {column}>")
+                print(f"<{token_type},{token_value[1]},{line_num},{column}>")
                 continue
             if(token_type == 'tkn_str'):
                 n=len(token_value)
-                print(f"<{token_type}, {token_value[1:(n-1)]}, {line_num}, {column}>")
+                print(f"<{token_type},{token_value[1:(n-1)]},{line_num},{column}>")
                 continue
-            print(f"<{token_type}, {token_value}, {line_num}, {column}>")
-          
+            if(token_type == 'comment'):
+                continue
+            print(f"<{token_type},{token_value},{line_num},{column}>")
+            continue
+        yield Token(token_type, token_value, line_num, column)  
 
 if __name__ == "__main__":
 
-    
-    s='''real i
-
-para i <- 0.0 hasta 5 Haga
-   escriba i
-   escriba " es un número.\n" '''
    
-    #input_str = open(0).read()
-    #print(input_str)
+    s = sys.stdin.read()
 
-    
+   
     for token in analizador_lexico(s):
         print(token)
   
