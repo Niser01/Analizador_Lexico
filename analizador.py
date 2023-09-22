@@ -1,6 +1,8 @@
 import re as re
 
 def analizador_lexico(frase):
+    # Como el lenguaje no discrimina entre mayusulas y minusculas, se pasa todo a minusculas para facilitar el proceso
+    frase = frase.lower()
     token_type: str
     token_value: str
     line: int
@@ -70,15 +72,19 @@ def analizador_lexico(frase):
     generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
     line_num = 1
     line_start = 0
-    counter = 1
 
     for mo in re.finditer(generadorPatrones, frase):
-        counter +=1
         token_type = mo.lastgroup
         token_value = mo.group()
         column = (mo.start()+1) - line_start
-        print(f"<{token_type}, {token_value}, {line_num}, {column}>")
-        print(counter, len(frase))
+        if(token_type == 'id' and token_value in palabrasReservadas):
+            token_type=token_value
+            print(f"<{token_value}, {line_num}, {column}>")
+        else:
+            print(f"<{token_type}, {token_value}, {line_num}, {column}>")
+        
+        
+
 
 
 
