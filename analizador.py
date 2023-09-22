@@ -92,7 +92,7 @@ def analizador_lexico(frase):
     ]
     
     generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
-    line_num = 1
+    line_num = 1 
     line_start = 0
 
     for mo in re.finditer(generadorPatrones, frase):
