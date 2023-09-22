@@ -70,14 +70,16 @@ def analizador_lexico(frase):
     generadorPatrones = '|'.join('(?P<%s>%s)' % pair for pair in tokens)
     line_num = 1
     line_start = 0
-    posicion = 0
+    counter = 1
 
-    while posicion < len(frase):
-        mo = re.finditer(generadorPatrones, frase)
+    for mo in re.finditer(generadorPatrones, frase):
+        counter +=1
         token_type = mo.lastgroup
         token_value = mo.group()
         column = (mo.start()+1) - line_start
         print(f"<{token_type}, {token_value}, {line_num}, {column}>")
+        print(counter, len(frase))
+
 
 
 
