@@ -16,7 +16,7 @@ def analizador_lexico(frase):
         }
     tokens = [
         ('one_line_comment', r'\/\/.*'),
-        ('multi_line_comment', r'[/]+[*].*[*]+[/]'), 
+        ('multi_line_comment', r'\/\*([^*]|(\*+[^*/]))*\*+\/'), 
         ('tkn_real', r'\d+(\.\d*)?'),    
         ('tkn_assign', r'<-'),                      
         ('id', r'[A-Za-z_0-9]+'),    
@@ -39,7 +39,7 @@ def analizador_lexico(frase):
         ('tkn_geq', r'>='),
         ('tkn_greater', r'\>'), 
         ('tkn_equal', r'\='), 
-        ('tkn_char', r"['\w']+"), 
+        ('tkn_char', r"'(.)'"), 
         ('skip', r'[ \t]+'), 
         ('newline', r'\n'),
         ('NiF', r'.'),
@@ -53,6 +53,7 @@ def analizador_lexico(frase):
     for mo in re.finditer(generadorPatrones, frase):
         token_type = mo.lastgroup
         token_value = mo.group()
+
         column = (mo.start()+1) - line_start
         
         if(token_type == 'id'):
@@ -98,11 +99,8 @@ def analizador_lexico(frase):
 
 if __name__ == "__main__":
 
-
-
     s = sys.stdin.read()
    
     for token in analizador_lexico(s):
         print(token)
   
-
