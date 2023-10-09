@@ -131,7 +131,13 @@ def analizador_lexico(frase):
 
 if __name__ == "__main__":
 
-    s = sys.stdin.read()
+    #s = sys.stdin.read()
+
+    s= '''funcion my_function : 5
+ inicio
+	escriba "I wanna return 5"
+ fin
+'''
 
     for token in analizador_lexico(s):
         print(token)
