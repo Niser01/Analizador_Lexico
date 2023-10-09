@@ -132,118 +132,9 @@ def analizador_lexico(frase):
     
 
 
-
-
-
 def analizador_sintactico(tokens):
 
-
-    # Definición de la posición actual en la lista de tokens
-    pos = 0
-
-    # Función para avanzar al siguiente token
-    def avanzar():
-        global pos
-        pos += 1
-
-    # Función para verificar si se ha llegado al final de la entrada
-    def fin_de_entrada():
-        return pos >= len(tokens)
-
-    # Función para analizar una declaración de variable
-    def analizar_declaracion_variable():
-        if tokens[pos] == 'VAR':
-            avanzar()
-            if tokens[pos].startswith('ID'):
-                avanzar()
-                if tokens[pos] in {'entero', 'real', 'booleano', 'caracter', 'cadena'}:
-                    avanzar()
-                    if tokens[pos] == ';':
-                        avanzar()
-                    else:
-                        raise SyntaxError("Error de sintaxis: Se esperaba ';' después de la declaración de variable.")
-                else:
-                    raise SyntaxError("Error de sintaxis: Tipo de dato no válido.")
-            else:
-                raise SyntaxError("Error de sintaxis: Identificador no válido.")
-        else:
-            raise SyntaxError("Error de sintaxis: Se esperaba 'VAR'.")
-
-    # Función para analizar una expresión
-    def analizar_expresion():
-        # Implementa la lógica para analizar expresiones aquí
-        pass
-
-    # Función para analizar una declaración de control
-    def analizar_declaracion_control():
-        if tokens[pos] in {'si', 'mientras', 'para', 'repita'}:
-            if tokens[pos] == 'si':
-                # Analiza una sentencia "si" aquí
-                pass
-            elif tokens[pos] == 'mientras':
-                # Analiza una sentencia "mientras" aquí
-                pass
-            elif tokens[pos] == 'para':
-                # Analiza una sentencia "para" aquí
-                pass
-            elif tokens[pos] == 'repita':
-                # Analiza una sentencia "repita" aquí
-                pass
-        else:
-            raise SyntaxError("Error de sintaxis: Declaración de control no válida.")
-
-    # Función para analizar una declaración de función
-    def analizar_declaracion_funcion():
-        if tokens[pos] == 'FUNCION':
-            avanzar()
-            if tokens[pos].startswith('ID'):
-                avanzar()
-                if tokens[pos] == '(':
-                    avanzar()
-                    # Analiza los parámetros de la función
-                    while tokens[pos] != ')':
-                        if tokens[pos].startswith('ID'):
-                            avanzar()
-                            if tokens[pos] in {'entero', 'real', 'booleano', 'caracter', 'cadena'}:
-                                avanzar()
-                                if tokens[pos] == ',':
-                                    avanzar()
-                                elif tokens[pos] == ')':
-                                    avanzar()
-                                else:
-                                    raise SyntaxError("Error de sintaxis: Se esperaba ',' o ')' en la lista de parámetros.")
-                            else:
-                                raise SyntaxError("Error de sintaxis: Tipo de dato no válido en la lista de parámetros.")
-                        else:
-                            raise SyntaxError("Error de sintaxis: Identificador no válido en la lista de parámetros.")
-                    # Analiza el tipo de dato de retorno y el cuerpo de la función
-                    if tokens[pos] in {'entero', 'real', 'booleano', 'caracter', 'cadena'}:
-                        avanzar()
-                        # Implementa el análisis del cuerpo de la función aquí
-                        pass
-                    else:
-                        raise SyntaxError("Error de sintaxis: Tipo de dato de retorno no válido.")
-                else:
-                    raise SyntaxError("Error de sintaxis: Se esperaba '(' después del nombre de la función.")
-            else:
-                raise SyntaxError("Error de sintaxis: Identificador no válido para la función.")
-        else:
-            raise SyntaxError("Error de sintaxis: Se esperaba 'FUNCION'.")
-
-    # Función principal para analizar el programa
-    def analizar_programa():
-        while not fin_de_entrada():
-            if tokens[pos] == 'VAR':
-                analizar_declaracion_variable()
-            elif tokens[pos] in {'si', 'mientras', 'para', 'repita'}:
-                analizar_declaracion_control()
-            elif tokens[pos] == 'FUNCION':
-                analizar_declaracion_funcion()
-            else:
-                raise SyntaxError("Error de sintaxis: Declaración no válida.")
-
-    # Llamada a la función principal para iniciar el análisis
-    analizar_programa()
+    return 0
 
 
 
@@ -252,16 +143,28 @@ if __name__ == "__main__":
 
     #s = sys.stdin.read()
 
-    s= '''funcion my_function : 5
-    inicio
-        escriba "I wanna return 5"
-    fin
-    '''
+    s= '''real n1,n2
+
+Inicio
+
+	 n1<-(2/3)*5+2^2
+	 n2<-50+22 div (14-7) mod 2
+      // imprimimos los valores en consola
+	 escriba n1, ' ' , n2
+	 
+FIN
+'''
     i = 0
     fraselexica = []
 
     for i in analizador_lexico(s):
        fraselexica.append(i)
 
-    print(fraselexica)
-    analizador_sintactico(fraselexica)
+    cadena = "<funcion,1,1>"
+    componentes = cadena.strip("<>").split(',')
+    print(componentes)
+
+
+    for i in range (len(fraselexica)):
+        print(fraselexica[i])
+

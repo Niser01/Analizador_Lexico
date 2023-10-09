@@ -1,6 +1,6 @@
+import sys
 from typing import NamedTuple
 import re
-import sys
 
 class Token(NamedTuple):
     token_type: str
@@ -56,6 +56,7 @@ def analizador_lexico(frase):
     line_start = 0
     iterator = re.finditer(generadorPatrones, frase)
     a = True
+    resultado = []
 
     for mo in iterator:
         token_type = mo.lastgroup
@@ -64,7 +65,7 @@ def analizador_lexico(frase):
         if(token_type == 'id' or token_type == 'close_fin' or token_type == 'close_caso' or token_type == 'close_mientras' or token_type == 'close_para' or token_type == 'close_registro'):
             token_value = token_value.lower()
             if(token_value in palabras_reservadas):
-              print(f"<{token_value},{line_num},{column}>")
+              resultado.append(f"<{token_value},{line_num},{column}>")
               if(token_value=='fin' and column == 1):
                  next_line_num = line_num
                  next_line_start = 0
@@ -85,13 +86,13 @@ def analizador_lexico(frase):
                         next_line_num = next_line_num + next_token_value.count('\n')
                       continue
                     if not (next_token_type == 'newline' or next_token_type == 'skip' or token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
-                      print(f'>>> Error lexico (linea: {next_line_num}, posicion: {next_column})')
+                      resultado.append(f'>>> Error lexico (linea: {next_line_num}, posicion: {next_column})')
                       return None
                   except StopIteration:
                     a = False
                     pass
               continue
-            print(f"<{token_type},{token_value},{line_num},{column}>")
+            resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
             continue
 
         elif token_type == 'newline':
@@ -101,32 +102,34 @@ def analizador_lexico(frase):
         elif token_type == 'skip':
             continue
         elif token_type == 'NiF':
-            print(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
+            resultado.append(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
             return None
         else:
             if(token_type == 'tkn_char'):
-                print(f"<{token_type},{token_value[1]},{line_num},{column}>")
+                resultado.append(f"<{token_type},{token_value[1]},{line_num},{column}>")
                 continue
             if(token_type == 'tkn_str'):
                 n=len(token_value)
                 if('\n' in token_value):
-                  print(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
+                  resultado.append(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
                   return None
-                print(repr(f"<{token_type},{token_value[1:(n-1)]},{line_num},{column}>")[1:-1])
+                resultado.append(repr(f"<{token_type},{token_value[1:(n-1)]},{line_num},{column}>")[1:-1])
                 continue
             if(token_type == 'tkn_real'):
                 if('.' in token_value):
-                    print(f"<{token_type},{token_value},{line_num},{column}>")
+                    resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
                     continue
                 else:
                     token_type = 'tkn_integer'
-                    print(f"<{token_type},{token_value},{line_num},{column}>")
+                    resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
                     continue
             if(token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
                 continue
-            print(f"<{token_type},{line_num},{column}>")
+            resultado.append(f"<{token_type},{line_num},{column}>")
             continue
-        yield Token(token_type, token_value, line_num, column)
+    return resultado
+        
+    
 
 
 if __name__ == "__main__":

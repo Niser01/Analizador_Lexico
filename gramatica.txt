@@ -1,0 +1,16 @@
+1. programa → sentencia programa | ε
+
+2. sentencia → declaración | asignación 
+
+3. declaración → tipo identificador token EoL
+
+4. asignación → identificador tkn_assign token EoL
+
+5. tipo → entero | real | booleano | caracter | cadena
+
+6. identificador → id
+
+7. token → tkn_comma | tkn_assign | tkn_real | tkn_integer | tkn_str | tkn_opening_par | tkn_opening_bra | tkn_period | tkn_colon | tkn_closing_bra | tkn_closing_par | tkn_plus | tkn_minus | tkn_times | tkn_div | tkn_power | tkn_neq | tkn_leq  | tkn_less | tkn_geq | tkn_greater | tkn_equal | tkn_char 
+
+8. EoL → newline
+
