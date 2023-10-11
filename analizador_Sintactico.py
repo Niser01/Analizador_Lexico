@@ -48,7 +48,6 @@ def analizador_lexico(frase):
         ('skip', r'[ \t]+'),
         ('newline', r'\n'),
         ('NiF', r'.'),
-
     ]
 
     generadorPatrones = '|'.join('(?P<%s>%s)' % (pair[0], pair[1]) for pair in tokens)
@@ -76,6 +75,7 @@ def analizador_lexico(frase):
                     next_token_value = next_token.group()
                     next_column = (next_token.start() + 1) - next_line_start
                     if next_token_type == 'newline':
+                      resultado.append(f"<{token_type},{line_num},{column}>")
                       next_line_start = next_token.end()
                       next_line_num += 1
                       continue
@@ -96,6 +96,7 @@ def analizador_lexico(frase):
             continue
 
         elif token_type == 'newline':
+            resultado.append(f"<{token_type},{line_num},{column}>")
             line_start = mo.end()
             line_num += 1
             continue
@@ -130,11 +131,362 @@ def analizador_lexico(frase):
     return resultado
         
     
+class Token:
+    def __init__(self, token_type, value, position):
+        self.token_type = token_type
+        self.value = value
+        self.position = position
 
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.current_token = None
+        self.index = 0
 
-def analizador_sintactico(tokens):
+    def consume_token(self):
+        if self.index < len(self.tokens):
+            self.current_token = self.tokens[self.index]
+            self.index += 1
+        else:
+            self.current_token = None
 
-    return 0
+    def match_token(self, token_type):
+        if self.current_token and self.current_token.token_type == token_type:
+            self.consume_token()
+        else:
+            raise SyntaxError(f"Expected {token_type}, but found {self.current_token.token_type} at position {self.current_token.position}")
+
+    def programa(self):
+        self.sentencia()
+        self.programa_Funcion()
+
+    def programa_Funcion(self):
+        if self.current_token and self.current_token.token_type == 'tkn_newline':
+            self.match_token('tkn_newline')
+            self.programa()
+        else:
+            return
+
+    def sentencia(self):
+        if self.current_token:
+            if self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena':
+                self.declaracion()
+                self.match_token('tkn_newline')
+            elif self.current_token.token_type == 'tkn_id':
+                self.asignacion()
+                self.match_token('tkn_newline')
+            elif self.current_token.token_type == 'tkn_lea':
+                self.lectura()
+            elif self.current_token.token_type == 'tkn_escriba':
+                self.escritura()
+            elif self.current_token.token_type == 'tkn_si':
+                self.condicional()
+            elif self.current_token.token_type == 'tkn_caso':
+                self.casos()
+            elif self.current_token.token_type == 'tkn_mientras':
+                self.mientras()
+            elif self.current_token.token_type == 'tkn_repita':
+                self.repita()
+            elif self.current_token.token_type == 'tkn_para':
+                self.para()
+            elif self.current_token.token_type == 'tkn_funcion':
+                self.funcion()
+            elif self.current_token.token_type == 'tkn_procedimiento':
+                self.procedimiento()
+            elif self.current_token.token_type == 'tkn_registro':
+                self.registro()
+            elif self.current_token.token_type == 'tkn_arreglo':
+                self.arreglo()
+            else:
+                raise SyntaxError(f"Unexpected token: {self.current_token.token_type} at position {self.current_token.position}")
+
+    def declaracion(self):
+        self.tipo()
+        self.match_token('tkn_id')
+        self.declaracion_Ciclo()
+        self.match_token('tkn_newline')
+
+    def declaracion_Ciclo(self):
+        if self.current_token and self.current_token.token_type == 'tkn_comma':
+            self.match_token('tkn_comma')
+            self.declaracion_Ciclo2()
+        else:
+            return
+
+    def declaracion_Ciclo2(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
+            self.tipo()
+        elif self.current_token and self.current_token.token_type == 'tkn_id':
+            self.match_token('tkn_id')
+        elif self.current_token and self.current_token.token_type == 'tkn_opening_par':
+            self.match_token('tkn_opening_par')
+            self.tipo()
+            self.match_token('tkn_id')
+            self.match_token('tkn_closing_par')
+        else:
+            raise SyntaxError(f"Unexpected token in declaration: {self.current_token.token_type} at position {self.current_token.position}")
+
+    def asignacion(self):
+        self.match_token('tkn_id')
+        self.match_token('tkn_assign')
+        self.expresion()
+        self.match_token('tkn_newline')
+
+    def lectura(self):
+        self.match_token('tkn_lea')
+        self.lectura_Ciclo()
+
+    def lectura_Ciclo(self):
+        self.match_token('tkn_id')
+        self.match_token('tkn_comma')
+        self.match_token('tkn_newline')
+        self.lectura_Ciclo()
+        
+    def escritura(self):
+        self.match_token('tkn_escriba')
+        self.escritura_Ciclo()
+
+    def escritura_Ciclo(self):
+        self.match_token('tkn_id')
+        self.match_token('tkn_comma')
+        self.match_token('tkn_integer' or 'tkn_real' or 'tkn_char' or 'tkn_str' or 'verdadero' or 'falso' or 'tkn_integer')
+        self.match_token('tkn_newline')
+        self.escritura_Ciclo()
+
+    def tipo(self):
+        self.match_token('tkn_integer' or 'tkn_real' or 'tkn_booleano' or 'tkn_caracter' or 'tkn_cadena')
+
+    def expresion(self):
+        self.expresion_Ciclo()
+
+    def expresion_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_opening_par'):
+            self.factor()
+            self.expresion_Ciclo()
+        else:
+            return
+
+    def factor(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso'):
+            self.match_token('tkn_integer' or 'tkn_real' or 'tkn_char' or 'tkn_str' or 'verdadero' or 'falso')
+        elif self.current_token and self.current_token.token_type == 'tkn_id':
+            self.match_token('tkn_id')
+        elif self.current_token and self.current_token.token_type == 'tkn_opening_par':
+            self.match_token('tkn_opening_par')
+            self.expresion()
+            self.match_token('tkn_closing_par')
+        else:
+            raise SyntaxError(f"Unexpected token in factor: {self.current_token.token_type} at position {self.current_token.position}")
+
+    def condicional(self):
+        self.match_token('tkn_si')
+        self.expresion()
+        self.match_token('tkn_entonces')
+        self.sentencia_condicional()
+
+    def sentencia_condicional(self):
+        self.sentencia_acciones()
+        self.sentencia_condicional_Ciclo()
+
+    def sentencia_condicional_Ciclo(self):
+        if self.current_token and self.current_token.token_type == 'tkn_sino':
+            self.match_token('tkn_sino')
+            self.bloque_sino()
+            self.match_token('tkn_fin_si')
+            self.sentencia_condicional_Ciclo()
+        else:
+            return
+
+    def bloque_sino(self):
+        self.sentencia_acciones()
+        self.bloque_sino_Ciclo()
+
+    def bloque_sino_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia_acciones()
+            self.bloque_sino_Ciclo()
+        else:
+            return
+
+    def casos(self):
+        self.match_token('tkn_caso')
+        self.match_token('tkn_id')
+        self.id_casos()
+        self.match_token('tkn_colon')
+        self.casos_Ciclo()
+        self.match_token('tkn_sino')
+        self.casos_Ciclo()
+
+    def casos_Ciclo(self):
+        self.sentencia_acciones()
+        self.casos_Ciclo()
+
+    def id_casos(self):
+        self.id_casos_Ciclo()
+        self.match_token('tkn_comma')
+
+    def id_casos_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real'):
+            self.match_token('tkn_integer' or 'tkn_real')
+        else:
+            raise SyntaxError(f"Unexpected token in id_casos: {self.current_token.token_type} at position {self.current_token.position}")
+
+    def mientras(self):
+        self.match_token('tkn_mientras')
+        self.expresion()
+        self.match_token('tkn_haga')
+        self.ciclo_mientras()
+        self.match_token('tkn_fin_mientras')
+
+    def ciclo_mientras(self):
+        self.sentencia_acciones()
+        self.ciclo_mientras_Ciclo()
+
+    def ciclo_mientras_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia_acciones()
+            self.ciclo_mientras_Ciclo()
+        else:
+            return
+
+    def repita(self):
+        self.match_token('tkn_repita')
+        self.ciclo_repita()
+        self.match_token('tkn_hasta')
+        self.expresion()
+
+    def ciclo_repita(self):
+        self.sentencia_acciones()
+        self.ciclo_repita_Ciclo()
+
+    def ciclo_repita_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia_acciones()
+            self.ciclo_repita_Ciclo()
+        else:
+            return
+
+    def para(self):
+        self.match_token('tkn_para')
+        self.expresion()
+        self.match_token('tkn_hasta')
+        self.expresion()
+        self.match_token('tkn_haga')
+        self.ciclo_para()
+        self.match_token('tkn_fin_para')
+
+    def ciclo_para(self):
+        self.sentencia_acciones()
+        self.ciclo_para_Ciclo()
+
+    def ciclo_para_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia_acciones()
+            self.ciclo_para_Ciclo()
+        else:
+            return
+
+    def procedimiento(self):
+        self.match_token('tkn_procedimiento')
+        self.match_token('tkn_id')
+        self.procedimiento_Ciclo()
+        self.match_token('tkn_inicio')
+        self.acciones_procedimiento()
+        self.match_token('tkn_fin')
+
+    def procedimiento_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
+            self.sentencia_acciones()
+            self.procedimiento_Ciclo()
+        else:
+            return
+
+    def acciones_procedimiento(self):
+        self.sentencia_acciones()
+        self.acciones_procedimiento()
+
+    def funcion(self):
+        self.match_token('tkn_funcion')
+        self.match_token('tkn_id')
+        self.funcion_Ciclo()
+        self.match_token('tkn_inicio')
+        self.acciones_funcion()
+        self.match_token('tkn_fin')
+
+    def funcion_Ciclo(self):
+        self.match_token('tkn_colon')
+        self.tipo()
+        self.declaracion()
+        self.funcion_Ciclo()
+
+    def registro(self):
+        self.match_token('tkn_registro')
+        self.match_token('tkn_id')
+        self.registro_Ciclo()
+        self.match_token('tkn_fin')
+
+    def registro_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
+            self.declaracion()
+            self.registro_Ciclo()
+        else:
+            return
+
+    def arreglo(self):
+        self.match_token('tkn_arreglo')
+        self.arreglo_Def()
+
+    def arreglo_Def(self):
+        self.match_token('tkn_opening_bra')
+        self.match_token('tkn_integer')
+        self.match_token('tkn_closing_bra')
+        self.match_token('tkn_de')
+        self.tipo()
+        self.match_token('tkn_id')
+        self.arreglo_Def()
+
+    def bloque_programa(self):
+        self.match_token('tkn_inicio')
+        self.bloque_programa_Ciclo()
+        self.match_token('tkn_fin')
+
+    def bloque_programa_Ciclo(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia_acciones()
+            self.bloque_programa_Ciclo()
+        else:
+            return
+
+    def sentencia_acciones(self):
+        if self.current_token and (self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
+            self.sentencia()
+        else:
+            raise SyntaxError(f"Unexpected token in sentencia_acciones: {self.current_token.token_type} at position {self.current_token.position}")
+
+    def parse(self):
+        self.consume_token()
+        self.programa()
+
+# Usage
+tokens = [
+    Token('tkn_integer', 5, (6, 6)),
+    Token('tkn_id', 'x', (7, 6)),
+    Token('tkn_assign', None, (7, 7)),
+    Token('tkn_integer', 10, (7, 8)),
+    Token('tkn_newline', None, (7, 10)),
+    Token('tkn_si', None, (8, 6)),
+    Token('tkn_integer', 5, (8, 9)),
+    Token('tkn_entonces', None, (8, 10)),
+    Token('tkn_id', 'x', (8, 12)),
+    Token('tkn_assign', None, (8, 13)),
+    Token('tkn_integer', 1, (8, 14)),
+    Token('tkn_newline', None, (8, 16)),
+    Token('tkn_fin_si', None, (9, 6)),
+]
+
+parser = Parser(tokens)
+parser.parse()
+
 
 
 
@@ -147,13 +499,12 @@ if __name__ == "__main__":
 
 Inicio
 
-	 n1<-(2/3)*5+2^2
-	 n2<-50+22 div (14-7) mod 2
-      // imprimimos los valores en consola
-	 escriba n1, ' ' , n2
+ n1<-(2/3)*5+2^2
+ n2<-50+22 div (14-7) mod 2
+ // imprimimos los valores
+ escriba n1, ' ' , n2
 	 
-FIN
-'''
+FIn'''
     i = 0
     fraselexica = []
 
