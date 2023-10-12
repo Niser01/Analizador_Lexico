@@ -45,7 +45,3 @@
 45. bloque_programa → 'inicio' bloque_programa_Ciclo 'fin'
 46. bloque_programa_Ciclo → sentencia_acciones bloque_programa_Ciclo | ε
 47. sentencia_acciones → asignación | lectura | escritura | condicional | casos | mientras | repita | para
-
-    entrada = [
-        ("real", 1, 1), ("id", "n1", 1, 6), ("tkn_comma", 1, 8), ("id", "n2", 1, 9), ("newline", 1, 11)
-    ]
