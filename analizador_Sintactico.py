@@ -173,10 +173,10 @@ class AnalizadorSintactico:
 
     def programa_Funcion(self):
         if self.tokens[self.pos][0] == 'newline':
-            self.pos += 1  # Avanzar al siguiente token (EoL)
+            self.pos += 1  
             if self.programa():
                 return True
-        return True  # Puede ser ε (vacío)
+        return True  
 
 
     def sentencia(self):
@@ -215,6 +215,7 @@ class AnalizadorSintactico:
             if self.identificador():
                 if self.declaracion_Ciclo():
                     if self.tokens[self.pos][0] == 'newline':
+                        self.pos += 1  
                         return True
         return False
 
@@ -223,6 +224,7 @@ class AnalizadorSintactico:
             self.pos += 1 
             if self.declaracion_Ciclo2():
                 if self.tokens[self.pos][0] == 'newline':
+                    self.pos += 1  
                     return True
         return True
 
@@ -239,15 +241,18 @@ class AnalizadorSintactico:
     def asignacion(self):
         if self.identificador():
             if self.tokens[self.pos][0] == 'tkn_assign':
+                self.pos += 1
                 if self.expresion():
                     if self.tokens[self.pos][0] == 'newline':
+                        self.pos += 1  
                         return True
         return False
 
     def lectura(self):
         if self.tokens[self.pos][0] == 'lea':
             self.pos += 1  
-            return self.lectura_Ciclo()
+            if self.lectura_Ciclo():
+                return True
         return False
 
 
@@ -255,6 +260,7 @@ class AnalizadorSintactico:
         if self.identificador():
             if self.token():
                 if self.tokens[self.pos][0] == 'newline':
+                    self.pos += 1  
                     if self.lectura_Ciclo():
                         return True
         return True
@@ -262,7 +268,8 @@ class AnalizadorSintactico:
     def escritura(self):
         if self.tokens[self.pos][0] == 'escriba':
             self.pos +=1
-            return self.escritura_Ciclo()
+            if self.escritura_Ciclo():
+                return True
         return False
 
     def escritura_Ciclo(self):
@@ -270,16 +277,10 @@ class AnalizadorSintactico:
             if self.token():
                 if self.palabras_reservadas():
                     if self.tokens[self.pos][0] == 'newline':
+                        self.pos += 1  
                         if self.escritura_Ciclo():
                             return True
         return True
-
-    def tipo(self):
-        tipos_validos = ["entero", "real", "booleano", "caracter", "cadena"]
-        if self.tokens[self.pos][0] in tipos_validos:
-            self.pos += 1
-            return True
-        return False
 
     def identificador(self):
         if self.tokens[self.pos][0] == "id":
@@ -291,12 +292,12 @@ class AnalizadorSintactico:
         return self.expresion_Ciclo()
 
     def expresion_Ciclo(self):
-        if self.factor():
+        if self.factor_expresion():
             if self.expresion_Ciclo():
                 return True
         return True
 
-    def factor(self):
+    def factor_expresion(self):
         if self.token():
             return True
         if self.identificador():
@@ -421,7 +422,8 @@ class AnalizadorSintactico:
             return True 
         if self.tokens[self.pos][0] == 'fin registro':
             self.pos += 1
-            return True                                                                                                        
+            return True   
+        return False                                                                                                     
 
     def EoL(self):
         if self.tokens[self.pos][0] == "newline":
@@ -430,49 +432,122 @@ class AnalizadorSintactico:
         return False
 
     def token(self):
-        tokens_validos = [
-            "tkn_comma", "tkn_assign", "tkn_real", "tkn_integer", "tkn_str",
-            "tkn_opening_par", "tkn_opening_bra", "tkn_closing_bra",
-            "tkn_closing_par", "tkn_period", "tkn_colon", "tkn_plus",
-            "tkn_minus", "tkn_times", "tkn_div", "tkn_power", "tkn_neq",
-            "tkn_leq", "tkn_less", "tkn_geq", "tkn_greater", "tkn_equal",
-            "tkn_char"
-        ]
-        if self.tokens[self.pos][0] in tokens_validos:
+        if self.tokens[self.pos][0] == 'tkn_comma':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'tkn_assign':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_real':
+            self.pos += 1
+            return True 
+        
+        if self.tokens[self.pos][0] == 'tkn_integer':
+            self.pos += 1
+            return True   
+
+        if self.tokens[self.pos][0] == 'tkn_str':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'tkn_opening_par':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_opening_bra':
+            self.pos += 1
+            return True 
+        
+        if self.tokens[self.pos][0] == 'tkn_closing_bra':
             self.pos += 1
             return True
+
+        if self.tokens[self.pos][0] == 'tkn_closing_par':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'tkn_period':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_colon':
+            self.pos += 1
+            return True 
+        
+        if self.tokens[self.pos][0] == 'tkn_plus':
+            self.pos += 1
+            return True   
+
+        if self.tokens[self.pos][0] == 'tkn_minus':
+            self.pos += 1
+            return True 
+
+        if self.tokens[self.pos][0] == 'tkn_times':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_div':
+            self.pos += 1
+            return True 
+        
+        if self.tokens[self.pos][0] == 'tkn_power':
+            self.pos += 1
+            return True   
+
+        if self.tokens[self.pos][0] == 'tkn_neq':
+            self.pos += 1
+            return True 
+
+        if self.tokens[self.pos][0] == 'tkn_leq':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_less':
+            self.pos += 1
+            return True 
+        
+        if self.tokens[self.pos][0] == 'tkn_geq':
+            self.pos += 1
+            return True   
+
+        if self.tokens[self.pos][0] == 'tkn_greater':
+            self.pos += 1
+            return True 
+
+        if self.tokens[self.pos][0] == 'tkn_equal':
+            self.pos += 1
+            return True             
+
+        if self.tokens[self.pos][0] == 'tkn_char':
+            self.pos += 1
+            return True 
+
         return False
 
 
     def condicional(self):
         if self.tokens[self.pos][0] == "si":
+            self.pos += 1
             if self.expresion():
                 if self.tokens[self.pos][0] == "entonces":
+                    self.pos += 1
                     if self.sentencia_condicional():
-                        return True
+                        if self.tokens[self.pos][0] == "fin si":
+                            self.pos += 1
+                            return True
         return False
 
     def sentencia_condicional(self):
         if self.sentencia_acciones():
-            return self.sentencia_condicional_Ciclo()
+            if self.sentencia_condicional_Ciclo():
+                return True
         return False
 
     def sentencia_condicional_Ciclo(self):
         if self.tokens[self.pos][0] == "sino":
-            if self.bloque_sino():
-                if self.tokens[self.pos][0] == "fin si":
-                    return self.sentencia_condicional_Ciclo()
-        return True
-
-    def bloque_sino(self):
-        if self.sentencia_acciones():
-            return self.bloque_sino_Ciclo()
-        return True
-
-    def bloque_sino_Ciclo(self):
-        if self.tokens[self.pos][0] == "sino":
-            if self.bloque_sino():
-                return self.bloque_sino_Ciclo()
+            self.pos += 1
+            if self.sentencia_condicional():
+                    if self.sentencia_condicional_Ciclo():
+                        return True
         return True
 
     def casos(self):
@@ -574,7 +649,7 @@ class AnalizadorSintactico:
 
     def funcion_Ciclo(self):
         if self.tokens[self.pos][0] == "tkn_colon":
-            if self.tipo():
+            if self.palabras_reservadas():
                 if self.declaracion():
                     return self.funcion_Ciclo()
         return True
@@ -622,15 +697,17 @@ class AnalizadorSintactico:
         if self.tokens[self.pos][0] == "tkn_opening_bra":
             if self.tokens[self.pos + 1][0] == "tkn_integer":
                 if self.tokens[self.pos + 2][0] == "tkn_closing_bra":
-                    if self.tipo():
+                    if self.palabras_reservadas():
                         if self.identificador():
                             return self.arreglo_Def()
         return True
 
     def bloque_programa(self):
         if self.tokens[self.pos][0] == "inicio":
+            self.pos += 1  
             if self.bloque_programa_Ciclo():
                 if self.tokens[self.pos][0] == "fin":
+                    self.pos += 1  
                     return True
         return False
 
@@ -669,16 +746,14 @@ if __name__ == "__main__":
 
     #s = sys.stdin.read()
 
-    s= '''real n1,n2
-
-Inicio
-
- n1<-(2/3)*5+2^2
- n2<-50+22 div (14-7) mod 2
- // imprimimos los valores
- escriba n1, ' ' , n2
-	 
-FIn'''
+    s= '''inicio
+	si 20<2^2 entonces
+		escriba "20 es menor que 2 elevado a la 2"
+	sino
+		escriba "20 no es menor que 2 elevado a la 2"
+	fin si
+fin
+'''
     i = 0
     fraselexica = []
 
@@ -695,7 +770,28 @@ FIn'''
 
     # Uso del analizador sintáctico
     entrada = [
-        ("real", 1, 1), ("id", "n1", 1, 6), ("tkn_comma", 1, 8), ("id", "n2", 1, 9), ("newline", 1, 11),("EOF", 1, 12)
+        ('inicio',1,1), 
+        ('newline',1,7), 
+        ('si',2,2), 
+        ('tkn_integer',20,2,5), 
+        ('tkn_less',2,7),
+        ('tkn_integer',2,2,8), 
+        ('tkn_power',2,9), 
+        ('tkn_integer',2,2,10),
+        ('entonces',2,12), 
+        ('newline',2,20), 
+        ('escriba',3,3),
+        ('tkn_str','20 es menor que 2 elevado a la 2',3,11), 
+        ('newline',3,45), 
+        ('sino',4,2),
+        ('newline',4,6), 
+        ('escriba',5,3),
+        ('tkn_str','20 no es menor que 2 elevado a la 2',5,11), 
+        ('newline',5,48), 
+        ('fin si',6,2),
+        ('newline',6,8),
+        ('fin',7,1),  
+        ("EOF", 7, 2)
     ]
 
     analizador = AnalizadorSintactico(entrada)
