@@ -131,364 +131,538 @@ def analizador_lexico(frase):
     return resultado
         
     
-class Token:
-    def __init__(self, token_type, value, position):
-        self.token_type = token_type
-        self.value = value
-        self.position = position
-
-class Parser:
+class AnalizadorSintactico:
     def __init__(self, tokens):
         self.tokens = tokens
-        self.current_token = None
-        self.index = 0
+        self.pos = 0
 
-    def consume_token(self):
-        if self.index < len(self.tokens):
-            self.current_token = self.tokens[self.index]
-            self.index += 1
-        else:
-            self.current_token = None
 
-    def match_token(self, token_type):
-        if self.current_token and self.current_token.token_type == token_type:
-            self.consume_token()
+    def reservadas(self):
+        palabras_validas = [
+            'inicio', 'fin', 'entero', 'real', 'booleano', 'caracter', 'cadena', 'verdadero', 'falso', 'escriba', 'lea', 'llamar',
+            'si', 'sino', 'y', 'o', 'mod', 'caso', 'mientras', 'haga', 'repita', 'hasta', 'para', 'procedimiento', 'var', 'retorne', 'funcion', 'nueva_linea',
+            'registro', 'arreglo', 'de', 'entonces', 'div', 'fin si', 'fin caso', 'fin mientras','fin para', 'fin registro'
+        ]
+        if self.tokens[self.pos][0] in palabras_validas:
+            return True
+        return False
+
+    def error(self, expected):
+        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period', 'tkn_colon', 'tkn_plus',
+                'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
+            token_actual = self.tokens[self.pos]
+            lexema = token_actual[0]
+            fila, columna = token_actual[1], token_actual[2]
+            mensaje = f"{fila}:{columna} Error sintáctico: se encontró: {lexema}; se esperaba: {', '.join(expected)}."
         else:
-            raise SyntaxError(f"Expected {token_type}, but found {self.current_token.token_type} at position {self.current_token.position}")
+            token_actual = self.tokens[self.pos]
+            lexema = token_actual[0]
+            fila, columna = token_actual[2], token_actual[3]
+            mensaje = f"{fila}:{columna} Error sintáctico: se encontró: {lexema}; se esperaba: {', '.join(expected)}."
+        print(mensaje)
+        exit()
+
+
 
     def programa(self):
-        self.sentencia()
-        self.programa_Funcion()
+        if self.sentencia():
+            if self.programa_Funcion():
+                if self.tokens[self.pos][0] == 'EOF':
+                    return True
+        return False
 
     def programa_Funcion(self):
-        if self.current_token and self.current_token.token_type == 'tkn_newline':
-            self.match_token('tkn_newline')
-            self.programa()
-        else:
-            return
+        if self.tokens[self.pos][0] == 'newline':
+            self.pos += 1  # Avanzar al siguiente token (EoL)
+            if self.programa():
+                return True
+        return True  # Puede ser ε (vacío)
+
 
     def sentencia(self):
-        if self.current_token:
-            if self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena':
-                self.declaracion()
-                self.match_token('tkn_newline')
-            elif self.current_token.token_type == 'tkn_id':
-                self.asignacion()
-                self.match_token('tkn_newline')
-            elif self.current_token.token_type == 'tkn_lea':
-                self.lectura()
-            elif self.current_token.token_type == 'tkn_escriba':
-                self.escritura()
-            elif self.current_token.token_type == 'tkn_si':
-                self.condicional()
-            elif self.current_token.token_type == 'tkn_caso':
-                self.casos()
-            elif self.current_token.token_type == 'tkn_mientras':
-                self.mientras()
-            elif self.current_token.token_type == 'tkn_repita':
-                self.repita()
-            elif self.current_token.token_type == 'tkn_para':
-                self.para()
-            elif self.current_token.token_type == 'tkn_funcion':
-                self.funcion()
-            elif self.current_token.token_type == 'tkn_procedimiento':
-                self.procedimiento()
-            elif self.current_token.token_type == 'tkn_registro':
-                self.registro()
-            elif self.current_token.token_type == 'tkn_arreglo':
-                self.arreglo()
-            else:
-                raise SyntaxError(f"Unexpected token: {self.current_token.token_type} at position {self.current_token.position}")
+        if self.declaracion():
+            return True
+        if self.bloque_programa():
+            return True
+        if self.asignacion():
+            return True
+        if self.lectura():
+            return True
+        if self.escritura():
+            return True
+        if self.condicional():
+            return True
+        if self.casos():
+            return True
+        if self.mientras():
+            return True
+        if self.repita():
+            return True
+        if self.para():
+            return True
+        if self.funcion():
+            return True
+        if self.procedimiento():
+            return True
+        if self.registro():
+            return True
+        if self.arreglo():
+            return True
+        return False
 
     def declaracion(self):
-        self.tipo()
-        self.match_token('tkn_id')
-        self.declaracion_Ciclo()
-        self.match_token('tkn_newline')
+        if self.palabras_reservadas():
+            if self.identificador():
+                if self.declaracion_Ciclo():
+                    if self.tokens[self.pos][0] == 'newline':
+                        return True
+        return False
 
     def declaracion_Ciclo(self):
-        if self.current_token and self.current_token.token_type == 'tkn_comma':
-            self.match_token('tkn_comma')
-            self.declaracion_Ciclo2()
-        else:
-            return
+        if self.tokens[self.pos][0] == "tkn_comma":
+            self.pos += 1 
+            if self.declaracion_Ciclo2():
+                if self.tokens[self.pos][0] == 'newline':
+                    return True
+        return True
 
     def declaracion_Ciclo2(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
-            self.tipo()
-        elif self.current_token and self.current_token.token_type == 'tkn_id':
-            self.match_token('tkn_id')
-        elif self.current_token and self.current_token.token_type == 'tkn_opening_par':
-            self.match_token('tkn_opening_par')
-            self.tipo()
-            self.match_token('tkn_id')
-            self.match_token('tkn_closing_par')
-        else:
-            raise SyntaxError(f"Unexpected token in declaration: {self.current_token.token_type} at position {self.current_token.position}")
+        if self.palabras_reservadas():
+            return True
+        if self.identificador():
+            return True
+        if self.palabras_reservadas():
+            if self.identificador():
+                return True
+        return False
 
     def asignacion(self):
-        self.match_token('tkn_id')
-        self.match_token('tkn_assign')
-        self.expresion()
-        self.match_token('tkn_newline')
+        if self.identificador():
+            if self.tokens[self.pos][0] == 'tkn_assign':
+                if self.expresion():
+                    if self.tokens[self.pos][0] == 'newline':
+                        return True
+        return False
 
     def lectura(self):
-        self.match_token('tkn_lea')
-        self.lectura_Ciclo()
+        if self.tokens[self.pos][0] == 'lea':
+            self.pos += 1  
+            return self.lectura_Ciclo()
+        return False
+
 
     def lectura_Ciclo(self):
-        self.match_token('tkn_id')
-        self.match_token('tkn_comma')
-        self.match_token('tkn_newline')
-        self.lectura_Ciclo()
-        
+        if self.identificador():
+            if self.token():
+                if self.tokens[self.pos][0] == 'newline':
+                    if self.lectura_Ciclo():
+                        return True
+        return True
+
     def escritura(self):
-        self.match_token('tkn_escriba')
-        self.escritura_Ciclo()
+        if self.tokens[self.pos][0] == 'escriba':
+            self.pos +=1
+            return self.escritura_Ciclo()
+        return False
 
     def escritura_Ciclo(self):
-        self.match_token('tkn_id')
-        self.match_token('tkn_comma')
-        self.match_token('tkn_integer' or 'tkn_real' or 'tkn_char' or 'tkn_str' or 'verdadero' or 'falso' or 'tkn_integer')
-        self.match_token('tkn_newline')
-        self.escritura_Ciclo()
+        if self.identificador():
+            if self.token():
+                if self.palabras_reservadas():
+                    if self.tokens[self.pos][0] == 'newline':
+                        if self.escritura_Ciclo():
+                            return True
+        return True
 
     def tipo(self):
-        self.match_token('tkn_integer' or 'tkn_real' or 'tkn_booleano' or 'tkn_caracter' or 'tkn_cadena')
+        tipos_validos = ["entero", "real", "booleano", "caracter", "cadena"]
+        if self.tokens[self.pos][0] in tipos_validos:
+            self.pos += 1
+            return True
+        return False
+
+    def identificador(self):
+        if self.tokens[self.pos][0] == "id":
+            self.pos += 1
+            return True
+        return False
 
     def expresion(self):
-        self.expresion_Ciclo()
+        return self.expresion_Ciclo()
 
     def expresion_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_opening_par'):
-            self.factor()
-            self.expresion_Ciclo()
-        else:
-            return
+        if self.factor():
+            if self.expresion_Ciclo():
+                return True
+        return True
 
     def factor(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso'):
-            self.match_token('tkn_integer' or 'tkn_real' or 'tkn_char' or 'tkn_str' or 'verdadero' or 'falso')
-        elif self.current_token and self.current_token.token_type == 'tkn_id':
-            self.match_token('tkn_id')
-        elif self.current_token and self.current_token.token_type == 'tkn_opening_par':
-            self.match_token('tkn_opening_par')
-            self.expresion()
-            self.match_token('tkn_closing_par')
-        else:
-            raise SyntaxError(f"Unexpected token in factor: {self.current_token.token_type} at position {self.current_token.position}")
+        if self.token():
+            return True
+        if self.identificador():
+            return True
+        if self.palabras_reservadas():
+            return True
+        if self.expresion():
+            return True
+        return False
+
+    def palabras_reservadas(self):
+        if self.tokens[self.pos][0] == 'inicio':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'fin':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'entero':
+            self.pos += 1
+            return True    
+        if self.tokens[self.pos][0] == 'real':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'booleano':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'caracter':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'cadena':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'verdadero':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'falso':
+            self.pos += 1
+            return True    
+        if self.tokens[self.pos][0] == 'escriba':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'lea':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'llamar':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'si':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'sino':
+            self.pos += 1
+            return True    
+        if self.tokens[self.pos][0] == 'y':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'u':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'mod':
+            self.pos += 1
+            return True    
+        if self.tokens[self.pos][0] == 'caso':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'mientras':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'haga':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'repita':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'hasta':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'para':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'procedimiento':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'var':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'retorne':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'funcion':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'nueva_linea':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'registro':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'arreglo':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'de':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'entonces':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'div':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'fin si':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'fin caso':
+            self.pos += 1
+            return True
+        if self.tokens[self.pos][0] == 'fin mientras':
+            self.pos += 1
+            return True   
+        if self.tokens[self.pos][0] == 'fin para':
+            self.pos += 1
+            return True 
+        if self.tokens[self.pos][0] == 'fin registro':
+            self.pos += 1
+            return True                                                                                                        
+
+    def EoL(self):
+        if self.tokens[self.pos][0] == "newline":
+            self.pos += 1
+            return True
+        return False
+
+    def token(self):
+        tokens_validos = [
+            "tkn_comma", "tkn_assign", "tkn_real", "tkn_integer", "tkn_str",
+            "tkn_opening_par", "tkn_opening_bra", "tkn_closing_bra",
+            "tkn_closing_par", "tkn_period", "tkn_colon", "tkn_plus",
+            "tkn_minus", "tkn_times", "tkn_div", "tkn_power", "tkn_neq",
+            "tkn_leq", "tkn_less", "tkn_geq", "tkn_greater", "tkn_equal",
+            "tkn_char"
+        ]
+        if self.tokens[self.pos][0] in tokens_validos:
+            self.pos += 1
+            return True
+        return False
+
 
     def condicional(self):
-        self.match_token('tkn_si')
-        self.expresion()
-        self.match_token('tkn_entonces')
-        self.sentencia_condicional()
+        if self.tokens[self.pos][0] == "si":
+            if self.expresion():
+                if self.tokens[self.pos][0] == "entonces":
+                    if self.sentencia_condicional():
+                        return True
+        return False
 
     def sentencia_condicional(self):
-        self.sentencia_acciones()
-        self.sentencia_condicional_Ciclo()
+        if self.sentencia_acciones():
+            return self.sentencia_condicional_Ciclo()
+        return False
 
     def sentencia_condicional_Ciclo(self):
-        if self.current_token and self.current_token.token_type == 'tkn_sino':
-            self.match_token('tkn_sino')
-            self.bloque_sino()
-            self.match_token('tkn_fin_si')
-            self.sentencia_condicional_Ciclo()
-        else:
-            return
+        if self.tokens[self.pos][0] == "sino":
+            if self.bloque_sino():
+                if self.tokens[self.pos][0] == "fin si":
+                    return self.sentencia_condicional_Ciclo()
+        return True
 
     def bloque_sino(self):
-        self.sentencia_acciones()
-        self.bloque_sino_Ciclo()
+        if self.sentencia_acciones():
+            return self.bloque_sino_Ciclo()
+        return True
 
     def bloque_sino_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia_acciones()
-            self.bloque_sino_Ciclo()
-        else:
-            return
+        if self.tokens[self.pos][0] == "sino":
+            if self.bloque_sino():
+                return self.bloque_sino_Ciclo()
+        return True
 
     def casos(self):
-        self.match_token('tkn_caso')
-        self.match_token('tkn_id')
-        self.id_casos()
-        self.match_token('tkn_colon')
-        self.casos_Ciclo()
-        self.match_token('tkn_sino')
-        self.casos_Ciclo()
+        if self.tokens[self.pos][0] == "caso":
+            if self.identificador():
+                if self.id_casos():
+                    if self.tokens[self.pos][0] == "tkn_colon":
+                        if self.casos_Ciclo():
+                            if self.tokens[self.pos][0] == "sino":
+                                if self.casos_Ciclo():
+                                    if self.tokens[self.pos][0] == "fin caso":
+                                        return True
+        return False
 
     def casos_Ciclo(self):
-        self.sentencia_acciones()
-        self.casos_Ciclo()
+        if self.sentencia_acciones():
+            return True
+        return True
 
     def id_casos(self):
-        self.id_casos_Ciclo()
-        self.match_token('tkn_comma')
+        if self.id_casos_Ciclo():
+            if self.tokens[self.pos][0] == "tkn_comma":
+                return True
+        return True
 
     def id_casos_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real'):
-            self.match_token('tkn_integer' or 'tkn_real')
-        else:
-            raise SyntaxError(f"Unexpected token in id_casos: {self.current_token.token_type} at position {self.current_token.position}")
+        if self.tokens[self.pos][0] in ["tkn_integer", "tkn_real"]:
+            self.pos += 1
+            return True
+        return False
 
     def mientras(self):
-        self.match_token('tkn_mientras')
-        self.expresion()
-        self.match_token('tkn_haga')
-        self.ciclo_mientras()
-        self.match_token('tkn_fin_mientras')
+        if self.tokens[self.pos][0] == "mientras":
+            if self.expresion():
+                if self.tokens[self.pos][0] == "haga":
+                    if self.ciclo_mientras():
+                        if self.tokens[self.pos][0] == "fin mientras":
+                            return True
+        return False
 
     def ciclo_mientras(self):
-        self.sentencia_acciones()
-        self.ciclo_mientras_Ciclo()
+        if self.sentencia_acciones():
+            return self.ciclo_mientras_Ciclo()
+        return False
 
     def ciclo_mientras_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia_acciones()
-            self.ciclo_mientras_Ciclo()
-        else:
-            return
+        if self.sentencia_acciones():
+            return self.ciclo_mientras_Ciclo()
+        return True
 
     def repita(self):
-        self.match_token('tkn_repita')
-        self.ciclo_repita()
-        self.match_token('tkn_hasta')
-        self.expresion()
+        if self.tokens[self.pos][0] == "repita":
+            if self.ciclo_repita():
+                if self.tokens[self.pos][0] == "hasta":
+                    if self.expresion():
+                        return True
+        return False
 
     def ciclo_repita(self):
-        self.sentencia_acciones()
-        self.ciclo_repita_Ciclo()
+        if self.sentencia_acciones():
+            return self.ciclo_repita_Ciclo()
+        return False
 
     def ciclo_repita_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia_acciones()
-            self.ciclo_repita_Ciclo()
-        else:
-            return
+        if self.sentencia_acciones():
+            return self.ciclo_repita_Ciclo()
+        return True
 
     def para(self):
-        self.match_token('tkn_para')
-        self.expresion()
-        self.match_token('tkn_hasta')
-        self.expresion()
-        self.match_token('tkn_haga')
-        self.ciclo_para()
-        self.match_token('tkn_fin_para')
+        if self.tokens[self.pos][0] == "para":
+            if self.expresion():
+                if self.tokens[self.pos][0] == "hasta":
+                    if self.expresion():
+                        if self.tokens[self.pos][0] == "haga":
+                            if self.ciclo_para():
+                                if self.tokens[self.pos][0] == "fin para":
+                                    return True
+        return False
 
     def ciclo_para(self):
-        self.sentencia_acciones()
-        self.ciclo_para_Ciclo()
+        if self.sentencia_acciones():
+            return self.ciclo_para_Ciclo()
+        return False
 
     def ciclo_para_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia_acciones()
-            self.ciclo_para_Ciclo()
-        else:
-            return
-
-    def procedimiento(self):
-        self.match_token('tkn_procedimiento')
-        self.match_token('tkn_id')
-        self.procedimiento_Ciclo()
-        self.match_token('tkn_inicio')
-        self.acciones_procedimiento()
-        self.match_token('tkn_fin')
-
-    def procedimiento_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
-            self.sentencia_acciones()
-            self.procedimiento_Ciclo()
-        else:
-            return
-
-    def acciones_procedimiento(self):
-        self.sentencia_acciones()
-        self.acciones_procedimiento()
+        if self.sentencia_acciones():
+            return self.ciclo_para_Ciclo()
+        return True
 
     def funcion(self):
-        self.match_token('tkn_funcion')
-        self.match_token('tkn_id')
-        self.funcion_Ciclo()
-        self.match_token('tkn_inicio')
-        self.acciones_funcion()
-        self.match_token('tkn_fin')
+        if self.tokens[self.pos][0] == "funcion":
+            if self.identificador():
+                if self.funcion_Ciclo():
+                    if self.tokens[self.pos][0] == "inicio":
+                        if self.acciones_funcion():
+                            if self.tokens[self.pos][0] == "fin":
+                                return True
+        return False
 
     def funcion_Ciclo(self):
-        self.match_token('tkn_colon')
-        self.tipo()
-        self.declaracion()
-        self.funcion_Ciclo()
+        if self.tokens[self.pos][0] == "tkn_colon":
+            if self.tipo():
+                if self.declaracion():
+                    return self.funcion_Ciclo()
+        return True
+
+    def procedimiento(self):
+        if self.tokens[self.pos][0] == "procedimiento":
+            if self.identificador():
+                if self.procedimiento_Ciclo():
+                    if self.tokens[self.pos][0] == "inicio":
+                        if self.acciones_procedimiento():
+                            if self.tokens[self.pos][0] == "fin":
+                                return True
+        return False
+
+    def procedimiento_Ciclo(self):
+        if self.sentencia_acciones():
+            return self.procedimiento_Ciclo()
+        return True
+
+    def acciones_procedimiento(self):
+        if self.sentencia_acciones():
+            return self.acciones_procedimiento()
+        return True
 
     def registro(self):
-        self.match_token('tkn_registro')
-        self.match_token('tkn_id')
-        self.registro_Ciclo()
-        self.match_token('tkn_fin')
+        if self.tokens[self.pos][0] == "registro":
+            if self.identificador():
+                if self.registro_Ciclo():
+                    if self.tokens[self.pos][0] == "fin":
+                        return True
+        return False
 
     def registro_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_booleano' or self.current_token.token_type == 'tkn_caracter' or self.current_token.token_type == 'tkn_cadena'):
-            self.declaracion()
-            self.registro_Ciclo()
-        else:
-            return
+        if self.declaracion():
+            return self.registro_Ciclo()
+        return True
 
     def arreglo(self):
-        self.match_token('tkn_arreglo')
-        self.arreglo_Def()
+        if self.tokens[self.pos][0] == "arreglo":
+            if self.arreglo_Def():
+                return True
+        return False
 
     def arreglo_Def(self):
-        self.match_token('tkn_opening_bra')
-        self.match_token('tkn_integer')
-        self.match_token('tkn_closing_bra')
-        self.match_token('tkn_de')
-        self.tipo()
-        self.match_token('tkn_id')
-        self.arreglo_Def()
+        if self.tokens[self.pos][0] == "tkn_opening_bra":
+            if self.tokens[self.pos + 1][0] == "tkn_integer":
+                if self.tokens[self.pos + 2][0] == "tkn_closing_bra":
+                    if self.tipo():
+                        if self.identificador():
+                            return self.arreglo_Def()
+        return True
 
     def bloque_programa(self):
-        self.match_token('tkn_inicio')
-        self.bloque_programa_Ciclo()
-        self.match_token('tkn_fin')
+        if self.tokens[self.pos][0] == "inicio":
+            if self.bloque_programa_Ciclo():
+                if self.tokens[self.pos][0] == "fin":
+                    return True
+        return False
 
     def bloque_programa_Ciclo(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_integer' or self.current_token.token_type == 'tkn_real' or self.current_token.token_type == 'tkn_char' or self.current_token.token_type == 'tkn_str' or self.current_token.token_type == 'verdadero' or self.current_token.token_type == 'falso' or self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia_acciones()
-            self.bloque_programa_Ciclo()
-        else:
-            return
+        if self.sentencia_acciones():
+            return self.bloque_programa_Ciclo()
+        return True
 
     def sentencia_acciones(self):
-        if self.current_token and (self.current_token.token_type == 'tkn_id' or self.current_token.token_type == 'tkn_lea' or self.current_token.token_type == 'tkn_escriba' or self.current_token.token_type == 'tkn_si' or self.current_token.token_type == 'tkn_caso' or self.current_token.token_type == 'tkn_mientras' or self.current_token.token_type == 'tkn_repita' or self.current_token.token_type == 'tkn_para'):
-            self.sentencia()
+        if self.asignacion():
+            return True
+        if self.lectura():
+            return True
+        if self.escritura():
+            return True
+        if self.condicional():
+            return True
+        if self.casos():
+            return True
+        if self.mientras():
+            return True
+        if self.repita():
+            return True
+        if self.para():
+            return True
+        return False
+
+    def analizar(self):
+        if self.programa():
+            print("El análisis sintáctico ha finalizado exitosamente.")
         else:
-            raise SyntaxError(f"Unexpected token in sentencia_acciones: {self.current_token.token_type} at position {self.current_token.position}")
-
-    def parse(self):
-        self.consume_token()
-        self.programa()
-
-# Usage
-tokens = [
-    Token('tkn_integer', 5, (6, 6)),
-    Token('tkn_id', 'x', (7, 6)),
-    Token('tkn_assign', None, (7, 7)),
-    Token('tkn_integer', 10, (7, 8)),
-    Token('tkn_newline', None, (7, 10)),
-    Token('tkn_si', None, (8, 6)),
-    Token('tkn_integer', 5, (8, 9)),
-    Token('tkn_entonces', None, (8, 10)),
-    Token('tkn_id', 'x', (8, 12)),
-    Token('tkn_assign', None, (8, 13)),
-    Token('tkn_integer', 1, (8, 14)),
-    Token('tkn_newline', None, (8, 16)),
-    Token('tkn_fin_si', None, (9, 6)),
-]
-
-parser = Parser(tokens)
-parser.parse()
-
-
-
+            self.error(["programa"])
 
 
 if __name__ == "__main__":
@@ -511,11 +685,18 @@ FIn'''
     for i in analizador_lexico(s):
        fraselexica.append(i)
 
-    cadena = "<funcion,1,1>"
-    componentes = cadena.strip("<>").split(',')
-    print(componentes)
+    #cadena = "<funcion,1,1>"
+    #componentes = cadena.strip("<>").split(',')
+    #print(componentes)
 
 
-    for i in range (len(fraselexica)):
-        print(fraselexica[i])
+    #for i in range (len(fraselexica)):
+    #    print(fraselexica[i])
 
+    # Uso del analizador sintáctico
+    entrada = [
+        ("real", 1, 1), ("id", "n1", 1, 6), ("tkn_comma", 1, 8), ("id", "n2", 1, 9), ("newline", 1, 11),("EOF", 1, 12)
+    ]
+
+    analizador = AnalizadorSintactico(entrada)
+    analizador.analizar()
