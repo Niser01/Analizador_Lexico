@@ -139,7 +139,7 @@ if __name__ == "__main__":
     s= '''funcion my_function : 5
  inicio
 	escriba "I wanna return 5"
- fin
+ fin 
 '''
 
     for token in analizador_lexico(s):
