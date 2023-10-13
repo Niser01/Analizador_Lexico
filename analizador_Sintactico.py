@@ -171,7 +171,6 @@ class AnalizadorSintactico:
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
                     return True
-        #self.expected.append('"Sentencia", "EoL", "programa", "EOF"')
         return False
 
     def programa_Funcion(self):
@@ -211,7 +210,8 @@ class AnalizadorSintactico:
             return True
         if self.arreglo():
             return True
-        #self.expected.append('"declaración", "bloque_programa", "asignación", "lectura", "escritura", "condicional", "casos", "mientras", "repita", "para", "funcion", "procedimiento", "registro", "arreglo"')
+        if self.EoL():
+            return True
         return False
 
     def declaracion(self):
@@ -221,11 +221,10 @@ class AnalizadorSintactico:
                     if self.tokens[self.pos][0] == 'newline':
                         self.pos += 1  
                         return True
-        #self.expected.append('"entero", "real", "booleano", "caracter", "cadena", "<-", "id"')
         return False
 
     def declaracion_Ciclo(self):
-        if self.tokens[self.pos][0] == "tkn_comma":
+        if self.tokens[self.pos][0] == 'tkn_comma':
             self.pos += 1 
             if self.declaracion_Ciclo2():
                 if self.tokens[self.pos][0] == 'newline':
@@ -644,8 +643,6 @@ class AnalizadorSintactico:
                 return True
         return True
 
-
-
     def para(self):
         if self.tokens[self.pos][0] == 'para':
             self.pos += 1
@@ -668,82 +665,109 @@ class AnalizadorSintactico:
         return True
 
     def procedimiento(self):
-        if self.tokens[self.pos][0] == "procedimiento":
+        if self.tokens[self.pos][0] == 'procedimiento':
+            self.pos += 1
             if self.identificador():
                 if self.procedimiento_Ciclo():
-                    if self.tokens[self.pos][0] == "inicio":
+                    if self.tokens[self.pos][0] == 'inicio':
+                        self.pos += 1
                         if self.acciones_procedimiento():
-                            if self.tokens[self.pos][0] == "fin":
+                            if self.tokens[self.pos][0] == 'fin':
+                                self.pos += 1
                                 return True
         return False
 
     def procedimiento_Ciclo(self):
         if self.sentencia_acciones():
-            return self.procedimiento_Ciclo()
+            if self.procedimiento_Ciclo():
+                return True
         return True
 
     def acciones_procedimiento(self):
         if self.sentencia_acciones():
-            return self.acciones_procedimiento()
+            if self.acciones_procedimiento():
+                return True
         return True
 
     def funcion(self):
-        if self.tokens[self.pos][0] == "funcion":
+        if self.tokens[self.pos][0] == 'funcion':
+            self.pos += 1
             if self.identificador():
                 if self.funcion_Ciclo():
-                    if self.tokens[self.pos][0] == "inicio":
+                    if self.tokens[self.pos][0] == 'inicio':
+                        self.pos += 1
                         if self.acciones_funcion():
-                            if self.tokens[self.pos][0] == "fin":
+                            if self.tokens[self.pos][0] == 'fin':
+                                self.pos += 1
                                 return True
         return False
 
     def funcion_Ciclo(self):
-        if self.tokens[self.pos][0] == "tkn_colon":
-            if self.palabras_reservadas():
-                if self.declaracion():
-                    return self.funcion_Ciclo()
+        if self.declaracion_ciclo_funcion():
+            if self.tokens[self.pos][0] == 'tkn_colon':
+                self.pos += 1
+                if self.palabras_reservadas():
+                    return True
+        return True
+    
+    def declaracion_ciclo_funcion(self):
+        if self.declaracion():
+            if self.declaracion_ciclo_funcion():
+                return True
+        return True
+
+    def acciones_funcion(self):
+        if self.sentencia_acciones():
+            if self.acciones_funcion():
+                return True
         return True
 
     def registro(self):
-        if self.tokens[self.pos][0] == "registro":
+        if self.tokens[self.pos][0] == 'registro':
+            self.pos += 1
             if self.identificador():
                 if self.registro_Ciclo():
-                    if self.tokens[self.pos][0] == "fin":
+                    if self.tokens[self.pos][0] == 'fin':
+                        self.pos += 1
                         return True
         return False
 
     def registro_Ciclo(self):
         if self.declaracion():
-            return self.registro_Ciclo()
+            if self.registro_Ciclo():
+                return True
         return True
 
     def arreglo(self):
-        if self.tokens[self.pos][0] == "arreglo":
+        if self.tokens[self.pos][0] == 'arreglo':
+            self.pos += 1
             if self.arreglo_Def():
                 return True
         return False
 
     def arreglo_Def(self):
-        if self.tokens[self.pos][0] == "tkn_opening_bra":
-            if self.tokens[self.pos + 1][0] == "tkn_integer":
-                if self.tokens[self.pos + 2][0] == "tkn_closing_bra":
-                    if self.palabras_reservadas():
-                        if self.identificador():
-                            return self.arreglo_Def()
+        if self.tokens[self.pos][0] == 'tkn_opening_bra':
+            if self.tokens[self.pos + 1][0] == 'tkn_integer':
+                if self.tokens[self.pos + 2][0] == 'tkn_closing_bra':
+                    if self.tokens[self.pos + 2][0] == 'de':
+                        if self.palabras_reservadas():
+                            if self.identificador():
+                                return True
         return True
 
     def bloque_programa(self):
-        if self.tokens[self.pos][0] == "inicio":
+        if self.tokens[self.pos][0] == 'inicio':
             self.pos += 1  
             if self.bloque_programa_Ciclo():
-                if self.tokens[self.pos][0] == "fin":
+                if self.tokens[self.pos][0] == 'fin':
                     self.pos += 1  
                     return True
         return False
 
     def bloque_programa_Ciclo(self):
         if self.sentencia_acciones():
-            return self.bloque_programa_Ciclo()
+            if self.bloque_programa_Ciclo():
+                return True
         return True
 
     def sentencia_acciones(self):
@@ -763,9 +787,12 @@ class AnalizadorSintactico:
             return True
         if self.para():
             return True
+        if self.EoL():
+            return True
         return False
 
     def analizar(self):
+        print(self.tokens)
         if self.programa():
             print("El análisis sintáctico ha finalizado exitosamente.")
         else:

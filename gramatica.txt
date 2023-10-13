@@ -1,6 +1,6 @@
 1. programa → sentencia programa_Funcion EOF
 2. programa_Funcion → EoL programa | ε
-3. sentencia → declaración | bloque_programa | asignación | lectura | escritura | condicional | casos | mientras | repita | para | funcion | procedimiento | registro | arreglo
+3. sentencia → declaración | bloque_programa | asignación | lectura | escritura | condicional | casos | mientras | repita | para | funcion | procedimiento | registro | arreglo | EoL 
 
 4. declaración → palabras_reservadas identificador declaración_Ciclo EoL
 5. declaración_Ciclo → token_Coma declaración_Ciclo2 EoL | ε
@@ -40,23 +40,30 @@
 27. mientras → 'mientras' expresión 'haga' ciclo_mientras 'fin mientras'
 28. ciclo_mientras → sentencia_acciones ciclo_mientras | ε
 
-
-
 30. repita → 'repita' ciclo_repita 'hasta' expresión
-31. ciclo_repita → sentencia_acciones ciclo_repita_Ciclo
-32. ciclo_repita_Ciclo → sentencia_acciones ciclo_repita_Ciclo | ε
+31. ciclo_repita → sentencia_acciones ciclo_repita_Ciclo | ε
+
 33. para → 'para' expresión 'hasta' expresión 'haga' ciclo_para 'fin para'
-34. ciclo_para → sentencia_acciones ciclo_para_Ciclo
-35. ciclo_para_Ciclo → sentencia_acciones ciclo_para_Ciclo | ε
+34. ciclo_para → sentencia_acciones ciclo_para | ε
+
 36. procedimiento → 'procedimiento' identificador procedimiento_Ciclo 'inicio' acciones_procedimiento 'fin'
 37. procedimiento_Ciclo → sentencia_acciones procedimiento_Ciclo | ε
 38. acciones_procedimiento → sentencia_acciones acciones_procedimiento | ε
+
 39. funcion → 'funcion' identificador funcion_Ciclo 'inicio' acciones_funcion 'fin'
-40. funcion_Ciclo → tkn_colon palabras_reservadas declaración funcion_Ciclo | ε
+40. funcion_Ciclo → declaracion_ciclo_funcion tkn_colon palabras_reservadas | ε
+41. declaracion_ciclo_funcion → declaracion declaracion_ciclo_funcion | ε
+42. acciones_funcion → sentencia_acciones acciones_funcion | ε
+
 41. registro → 'registro' identificador registro_Ciclo 'fin'
 42. registro_Ciclo → declaración registro_Ciclo | ε
+
 43. arreglo → 'arreglo' arreglo_Def
-44. arreglo_Def → tkn_opening_bra tkn_integer tkn_closing_bra de palabras_reservadas identificador arreglo_Def | ε
+44. arreglo_Def → 'tkn_opening_bra' 'tkn_integer' 'tkn_closing_bra' 'de' palabras_reservadas identificador arreglo_Def | ε
+
 45. bloque_programa → 'inicio' bloque_programa_Ciclo 'fin'
 46. bloque_programa_Ciclo → sentencia_acciones bloque_programa_Ciclo | ε
-47. sentencia_acciones → asignación | lectura | escritura | condicional | casos | mientras | repita | para
+
+47. sentencia_acciones → asignación | lectura | escritura | condicional | casos | mientras | repita | para | EoL
+
+
