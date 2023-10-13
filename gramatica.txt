@@ -16,9 +16,10 @@
 
 12. identificador → id
 
-13. expresión → expresión_Ciclo 
-14. expresión_Ciclo → factor_expresión expresión_Ciclo | ε
-15. factor_expresión → token | identificador | palabras_reservadas | expresión 
+13. expresión → factor_expresión expresión_Ciclo
+14. expresión_Ciclo → factor_expresión expresión_Ciclo_Prime
+15. expresión_Ciclo_Prime → factor_expresión expresión_Ciclo_Prime | ε
+16. factor_expresión → token | identificador | palabras_reservadas | expresión
 
 16. palabras_reservadas → 'inicio' | 'fin' | 'entero' | 'real' | 'booleano' | 'caracter' | 'cadena' | 'verdadero' | 'falso' | 'escriba' | 'lea' | 'llamar' | 'si' | 'sino' | 'y' | 'o' | 'mod' | 'caso' | 'mientras' | 'haga' | 'repita' | 'hasta' | 'para' | 'procedimiento' | 'var' | 'retorne' | 'funcion' | 'nueva_linea' | 'registro' | 'arreglo' | 'de' | 'entonces' | 'div' | 'fin si' | 'fin caso' | 'fin mientras' |'fin para'| 'fin registro'
 
@@ -27,16 +28,20 @@
 18. token → 'tkn_comma' | 'tkn_assign' | 'tkn_real' | 'tkn_integer' | 'tkn_str' | 'tkn_opening_par' | 'tkn_opening_bra' | 'tkn_closing_bra' | 'tkn_closing_par' | 'tkn_period' | 'tkn_colon' | 'tkn_plus' | 'tkn_minus' | 'tkn_times' | 'tkn_div' | 'tkn_power' | 'tkn_neq' | 'tkn_leq' | 'tkn_less' | 'tkn_geq' | 'tkn_greater' | 'tkn_equal' | 'tkn_char' 
 
 19. condicional → 'si' expresión 'entonces' sentencia_condicional 'fin si'
-20. sentencia_condicional → sentencia_acciones sentencia_condicional_Ciclo
-21. sentencia_condicional_Ciclo → 'sino' sentencia_condicional sentencia_condicional_Ciclo | ε
+20. sentencia_condicional → sentencia_condicional_Ciclo | sentencia_acciones
+21. sentencia_condicional_Ciclo → 'sino' sentencia_acciones sentencia_condicional_Ciclo | ε
 
-23. casos → 'caso' identificador id_casos tkn_colon casos_Ciclo 'sino' casos_Ciclo 'fin caso'
-24. casos_Ciclo → sentencia_acciones | ε
-25. id_casos → id_casos_Ciclo 'tkn_comma'
-26. id_casos_Ciclo → 'tkn_integer' | 'tkn_real'
+22. casos → 'caso' valor_caso 'tkn_colon' bloque_codigo_caso 'sino' bloque_codigo_caso 'fin caso'
+23. valor_caso → id_casos_Ciclo valor_caso_tail | ε
+24. valor_caso_tail → 'tkn_comma' id_casos_Ciclo valor_caso_tail | ε
+25. id_casos_Ciclo → 'tkn_integer' | 'tkn_real'
+26. bloque_codigo_caso → sentencia_acciones | ε
+
 27. mientras → 'mientras' expresión 'haga' ciclo_mientras 'fin mientras'
-28. ciclo_mientras → sentencia_acciones ciclo_mientras_Ciclo
-29. ciclo_mientras_Ciclo → sentencia_acciones ciclo_mientras_Ciclo | ε
+28. ciclo_mientras → sentencia_acciones ciclo_mientras | ε
+
+
+
 30. repita → 'repita' ciclo_repita 'hasta' expresión
 31. ciclo_repita → sentencia_acciones ciclo_repita_Ciclo
 32. ciclo_repita_Ciclo → sentencia_acciones ciclo_repita_Ciclo | ε
