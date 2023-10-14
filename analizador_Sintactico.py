@@ -130,14 +130,19 @@ def analizador_lexico(frase):
             continue
     return resultado
         
-    
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+
 class AnalizadorSintactico:
     
     def __init__(self, tokens):
         self.tokens = tokens
         self.pos = 0
         self.expected = []
-
+        cont = 0
+        
 
     def reservadas(self):
         palabras_validas = [
@@ -167,6 +172,7 @@ class AnalizadorSintactico:
 
 
     def programa(self):
+        
         if self.sentencia():
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
@@ -174,17 +180,21 @@ class AnalizadorSintactico:
         return False
 
     def programa_Funcion(self):
-        if self.tokens[self.pos][0] == 'newline':
-            self.pos += 1  
+        
+        if self.programa():
+                return True
+        if self.EoL():
             if self.programa():
                 return True
         return True  
 
 
-    def sentencia(self):
+    def sentencia(self):  
+        logging.debug(self.tokens[self.pos][0]) 
+        
         if self.declaracion():
             return True
-        if self.bloque_programa():
+        if self.bloque_programa():  
             return True
         if self.asignacion():
             return True
@@ -214,12 +224,32 @@ class AnalizadorSintactico:
             return True
         return False
 
+    def sentencia_acciones(self):
+        if self.asignacion():
+            return True
+        if self.lectura():
+            return True
+        if self.escritura():
+            return True
+        if self.condicional():
+            return True
+        if self.casos():
+            return True
+        if self.mientras():
+            return True
+        if self.repita():
+            return True
+        if self.para():
+            return True
+        if self.EoL():
+            return True
+        return False
+
     def declaracion(self):
         if self.palabras_reservadas():
             if self.identificador():
                 if self.declaracion_Ciclo():
-                    if self.tokens[self.pos][0] == 'newline':
-                        self.pos += 1  
+                    if self.EoL(): 
                         return True
         return False
 
@@ -227,8 +257,7 @@ class AnalizadorSintactico:
         if self.tokens[self.pos][0] == 'tkn_comma':
             self.pos += 1 
             if self.declaracion_Ciclo2():
-                if self.tokens[self.pos][0] == 'newline':
-                    self.pos += 1  
+                if self.EoL(): 
                     return True
         return True
 
@@ -247,8 +276,7 @@ class AnalizadorSintactico:
             if self.tokens[self.pos][0] == 'tkn_assign':
                 self.pos += 1
                 if self.expresion():
-                    if self.tokens[self.pos][0] == 'newline':
-                        self.pos += 1  
+                    if self.EoL():
                         return True
         return False
 
@@ -263,8 +291,7 @@ class AnalizadorSintactico:
     def lectura_Ciclo(self):
         if self.identificador():
             if self.token():
-                if self.tokens[self.pos][0] == 'newline':
-                    self.pos += 1  
+                if self.EoL():
                     if self.lectura_Ciclo():
                         return True
         return True
@@ -280,8 +307,7 @@ class AnalizadorSintactico:
         if self.identificador():
             if self.token():
                 if self.palabras_reservadas():
-                    if self.tokens[self.pos][0] == 'newline':
-                        self.pos += 1  
+                    if self.EoL():
                         if self.escritura_Ciclo():
                             return True
         return True
@@ -538,7 +564,8 @@ class AnalizadorSintactico:
 
 
     def condicional(self):
-        if self.tokens[self.pos][0] == 'si':
+        
+        if self.tokens[self.pos][0] == 'si':            
             self.pos += 1
             if self.expresion():
                 if self.tokens[self.pos][0] == 'entonces':
@@ -770,29 +797,8 @@ class AnalizadorSintactico:
                 return True
         return True
 
-    def sentencia_acciones(self):
-        if self.asignacion():
-            return True
-        if self.lectura():
-            return True
-        if self.escritura():
-            return True
-        if self.condicional():
-            return True
-        if self.casos():
-            return True
-        if self.mientras():
-            return True
-        if self.repita():
-            return True
-        if self.para():
-            return True
-        if self.EoL():
-            return True
-        return False
 
     def analizar(self):
-        print(self.tokens)
         if self.programa():
             print("El análisis sintáctico ha finalizado exitosamente.")
         else:
