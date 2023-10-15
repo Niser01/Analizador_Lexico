@@ -127,6 +127,7 @@ def analizador_lexico(frase):
                 continue
             resultado.append(f"<{token_type},{line_num},{column}>")
             continue
+    resultado.append(f"<EOF>")            
     return resultado
         
     
@@ -134,13 +135,7 @@ def analizador_lexico(frase):
 
 if __name__ == "__main__":
 
-    #s = sys.stdin.read()
-
-    s= '''funcion my_function : 5
- inicio
-	escriba "I wanna return 5"
- fin 
-'''
+    s = sys.stdin.read()
 
     for token in analizador_lexico(s):
         print(token)
