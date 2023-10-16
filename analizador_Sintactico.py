@@ -163,6 +163,7 @@ class AnalizadorSintactico:
         self.procedimiento_expected = []
         self.registro_expected = []                   
         self.arreglo_expected = []
+        self.llamar_expected = []
 
     def reservadas(self):
         palabras_validas = [
@@ -232,7 +233,6 @@ class AnalizadorSintactico:
 
 
     def programa(self):
-        #print("INCIO programa: ", self.tokens[self.pos][0], self.pos)
         if self.sentencia():
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
@@ -313,13 +313,25 @@ class AnalizadorSintactico:
             self.pos += 1            
             if self.llamar_procedimiento():
                 return True
+
+        token_actual = self.tokens[self.pos]
+        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period',
+         'tkn_colon', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
+            self.declaracion_expected.append(token_actual[1])
+            self.declaracion_expected.append(token_actual[2])
+        else:
+            self.declaracion_expected.append(token_actual[2])
+            self.declaracion_expected.append(token_actual[3])                   
         return False                
 
 
     def llamar_procedimiento(self):           
         if self.EoL():
-            return True           
+            return True   
+        self.llamar_expected.append('"id"')
         if self.identificador():
+            self.llamar_expected.pop()
+
             if self.expresion():
                 return True
         return True            
@@ -331,18 +343,22 @@ class AnalizadorSintactico:
         if self.tokens[self.pos][0] == 'cadena':            
             if self.palabras_reservadas():
                 self.declaracion_expected.append('"tkn_opening_bra"')
+
                 if self.tokens[self.pos][0] == 'tkn_opening_bra':
                     self.pos += 1
                     self.declaracion_expected.pop()
                     self.declaracion_expected.append('"tkn_integer"')
+
                     if self.tokens[self.pos][0] == 'tkn_integer':
                         self.pos += 1
                         self.declaracion_expected.pop()
                         self.declaracion_expected.append('"tkn_closing_bra"')
+
                         if self.tokens[self.pos][0] == 'tkn_closing_bra':
                             self.pos += 1
                             self.declaracion_expected.pop()
                             self.declaracion_expected.append('"id"')
+
                             if self.identificador():
                                 self.declaracion_expected.pop()
                                 return True
@@ -351,22 +367,29 @@ class AnalizadorSintactico:
             self.declaracion_expected.append('"real"')
             self.declaracion_expected.append('"booleano"')
             self.declaracion_expected.append('"caracter"')
+
             if self.palabras_reservadas():                
                 self.declaracion_expected.pop()
                 self.declaracion_expected.pop()
                 self.declaracion_expected.pop()
                 self.declaracion_expected.pop()
                 self.declaracion_expected.append('"id"')
+
                 if self.identificador():
                     self.declaracion_expected.pop()
-                    if self.declaracion_Ciclo():
-                        
+
+                    if self.declaracion_Ciclo():                        
                         if self.EoL():
                             return True  
 
         token_actual = self.tokens[self.pos]
-        self.declaracion_expected.append(token_actual[1])
-        self.declaracion_expected.append(token_actual[2])
+        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period',
+         'tkn_colon', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
+            self.declaracion_expected.append(token_actual[1])
+            self.declaracion_expected.append(token_actual[2])
+        else:
+            self.declaracion_expected.append(token_actual[2])
+            self.declaracion_expected.append(token_actual[3])   
         return False
 
     def declaracion_Ciclo(self):
@@ -395,6 +418,8 @@ class AnalizadorSintactico:
         if self.identificador():
             self.declaracion_expected.pop()
             return True
+
+        token_actual = self.tokens[self.pos]            
         return False
 
     def asignacion(self):
@@ -761,51 +786,55 @@ class AnalizadorSintactico:
 
     def funcion(self):     
         self.funcion_expected.clear()
-        token_actual = self.tokens[self.pos]
     
         if self.tokens[self.pos][0] == 'funcion':
             self.pos += 1   
-            self.funcion_expected.append('"id"')
-            token_actual = self.tokens[self.pos]         
+            self.funcion_expected.append('"id"')   
+
             if self.identificador():
                 self.funcion_expected.pop()
-                token_actual = self.tokens[self.pos]
-                if self.funcion_Ciclo():  
+
+                if self.funcion_Ciclo():                      
                     self.funcion_expected.append('"inicio"')
-                    token_actual = self.tokens[self.pos]
+
                     if self.tokens[self.pos][0] == 'inicio':
                         self.pos += 1
                         self.funcion_expected.pop()
-                        token_actual = self.tokens[self.pos]
+
                         if self.acciones_funcion():
                             self.funcion_expected.append('"fin"')
-                            token_actual = self.tokens[self.pos]
+
                             if self.tokens[self.pos][0] == 'fin':
                                 self.pos += 1
-                                self.funcion_expected.pop()  
-                                token_actual = self.tokens[self.pos]                      
+                                self.funcion_expected.pop()                      
                                 return True
 
-        token_actual = self.tokens[self.pos + 1]
-        self.funcion_expected.append(token_actual[1])
-        self.funcion_expected.append(token_actual[2])
-
+        token_actual = self.tokens[self.pos]
+        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period',
+         'tkn_colon', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
+            self.funcion_expected.append(token_actual[1])
+            self.funcion_expected.append(token_actual[2])
+        else:
+            self.funcion_expected.append(token_actual[2])
+            self.funcion_expected.append(token_actual[3])            
         return False
 
     def funcion_Ciclo(self):
         
         if self.parametros_ciclo_funcion():
             self.funcion_expected.append('"tkn_colon"')
+
             if self.tokens[self.pos][0] == 'tkn_colon':
                 self.pos += 1
                 self.funcion_expected.pop()
-
+                
                 self.funcion_expected.append('"booleano"')
                 self.funcion_expected.append('"cadena"')
                 self.funcion_expected.append('"caracter"')
                 self.funcion_expected.append('"entero"')
                 self.funcion_expected.append('"id"')
-                self.funcion_expected.append('"real"')                
+                self.funcion_expected.append('"real"')  
+
                 if self.palabras_reservadas():
                     self.funcion_expected.pop()
                     self.funcion_expected.pop()
@@ -814,6 +843,7 @@ class AnalizadorSintactico:
                     self.funcion_expected.pop()
                     self.funcion_expected.pop()
                     return True
+
                 if self.identificador():
                     self.funcion_expected.pop()
                     self.funcion_expected.pop()
@@ -821,7 +851,9 @@ class AnalizadorSintactico:
                     self.funcion_expected.pop()
                     self.funcion_expected.pop()
                     self.funcion_expected.pop()
-                    return True    
+                    return True
+
+        token_actual = self.tokens[self.pos]                   
         return False
 
     def parametros_ciclo_funcion(self):
@@ -829,6 +861,7 @@ class AnalizadorSintactico:
             if self.declaracion():
                 if self.tokens[self.pos][0] == 'tkn_closing_par':
                    return True
+
         if self.declaracion():
             return True                   
         return True
@@ -899,39 +932,166 @@ class AnalizadorSintactico:
         if self.programa():          	
             print("El analisis sintactico ha finalizado exitosamente.",end="")
         else:
-            print(self.declaracion_expected)                       
-            #print(self.bloque_programa_expected)                           
-            #print(self.EoL_expected)                   
-            #print(self.asignacion_expected)                
-            #print(self.lectura_expected) 
-            #print(self.escritura_expected)               
-            #print(self.condicional_expected) 
-            #print(self.casos_expected)
-            #print(self.mientras_expected) 
-            #print(self.repita_expected)                 
-            #print(self.para_expected)               
-            print(self.funcion_expected)                       
-            #print(self.procedimiento_expected)
-            #print(self.registro_expected)                 
-            #print(self.arreglo_expected) 
+            token_actual = self.tokens[self.pos]
+            a=self.declaracion_expected
+            b=self.funcion_expected
+            c=self.bloque_programa_expected
+            d=self.EoL_expected      
+            e=self.asignacion_expected                
+            f=self.lectura_expected 
+            g=self.escritura_expected            
+            h=self.condicional_expected 
+            i=self.casos_expected
+            j=self.mientras_expected
+            k=self.repita_expected                
+            l=self.para_expected                              
+            m=self.procedimiento_expected
+            n=self.registro_expected                 
+            o=self.arreglo_expected 
+            p=self.llamar_expected
 
+            if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period',
+            'tkn_colon', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
 
+                if(a[-2:] == [token_actual[1], token_actual[2]]):
+                    a.pop()
+                    a.pop()
+                    self.error(a)
+                if(b[-2:] == [token_actual[1], token_actual[2]]):
+                    b.pop()
+                    b.pop()
+                    self.error(b)
+                if(c[-2:] == [token_actual[1], token_actual[2]]):
+                    c.pop()
+                    c.pop()
+                    self.error(c) 
+                if(d[-2:] == [token_actual[1], token_actual[2]]):
+                    d.pop()
+                    d.pop()
+                    self.error(d) 
+                if(e[-2:] == [token_actual[1], token_actual[2]]):
+                    e.pop()
+                    e.pop()
+                    self.error(e)   
+                if(f[-2:] == [token_actual[1], token_actual[2]]):
+                    f.pop()
+                    f.pop()
+                    self.error(f)                                                                           
+                if(g[-2:] == [token_actual[1], token_actual[2]]):
+                    g.pop()
+                    g.pop()
+                    self.error(g)    
+                if(h[-2:] == [token_actual[1], token_actual[2]]):
+                    h.pop()
+                    h.pop()
+                    self.error(h)    
+                if(i[-2:] == [token_actual[1], token_actual[2]]):
+                    i.pop()
+                    i.pop()
+                    self.error(i)   
+                if(j[-2:] == [token_actual[1], token_actual[2]]):
+                    j.pop()
+                    j.pop()
+                    self.error(j)                                                                     
+                if(k[-2:] == [token_actual[1], token_actual[2]]):
+                    k.pop()
+                    k.pop()
+                    self.error(k)   
+                if(l[-2:] == [token_actual[1], token_actual[2]]):
+                    l.pop()
+                    l.pop()
+                    self.error(l)  
+                if(m[-2:] == [token_actual[1], token_actual[2]]):
+                    m.pop()
+                    m.pop()
+                    self.error(m)  
+                if(n[-2:] == [token_actual[1], token_actual[2]]):
+                    n.pop()
+                    n.pop()
+                    self.error(n)  
+                if(o[-2:] == [token_actual[1], token_actual[2]]):
+                    o.pop()
+                    o.pop()
+                    self.error(o)                    
+                if(p[-2:] == [token_actual[1], token_actual[2]]):
+                    p.pop()
+                    p.pop()
+                    self.error(p)                                                                            
 
-
-            self.error(self.declaracion_expected)
-
+            else:
+                if(a[-2:] == [token_actual[2], token_actual[3]]):
+                    a.pop()
+                    a.pop()
+                    self.error(a)
+                if(b[-2:] == [token_actual[2], token_actual[3]]):
+                    b.pop()
+                    b.pop()
+                    self.error(b)                  
+                if(c[-2:] == [token_actual[2], token_actual[3]]):
+                    c.pop()
+                    c.pop()
+                    self.error(c) 
+                if(d[-2:] == [token_actual[2], token_actual[3]]):
+                    d.pop()
+                    d.pop()
+                    self.error(d) 
+                if(e[-2:] == [token_actual[2], token_actual[3]]):
+                    e.pop()
+                    e.pop()
+                    self.error(e)   
+                if(f[-2:] == [token_actual[2], token_actual[3]]):
+                    f.pop()
+                    f.pop()
+                    self.error(f)                                                                           
+                if(g[-2:] == [token_actual[2], token_actual[3]]):
+                    g.pop()
+                    g.pop()
+                    self.error(g)    
+                if(h[-2:] == [token_actual[2], token_actual[3]]):
+                    h.pop()
+                    h.pop()
+                    self.error(h)    
+                if(i[-2:] == [token_actual[2], token_actual[3]]):
+                    i.pop()
+                    i.pop()
+                    self.error(i)   
+                if(j[-2:] == [token_actual[2], token_actual[3]]):
+                    j.pop()
+                    j.pop()
+                    self.error(j)                                                                     
+                if(k[-2:] == [token_actual[2], token_actual[3]]):
+                    k.pop()
+                    k.pop()
+                    self.error(k)   
+                if(l[-2:] == [token_actual[2], token_actual[3]]):
+                    l.pop()
+                    l.pop()
+                    self.error(l)  
+                if(m[-2:] == [token_actual[2], token_actual[3]]):
+                    m.pop()
+                    m.pop()
+                    self.error(m)  
+                if(n[-2:] == [token_actual[2], token_actual[3]]):
+                    n.pop()
+                    n.pop()
+                    self.error(n)  
+                if(o[-2:] == [token_actual[2], token_actual[3]]):
+                    o.pop()
+                    o.pop()
+                    self.error(o) 
+                if(p[-2:] == [token_actual[2], token_actual[3]]):
+                    p.pop()
+                    p.pop()
+                    self.error(p) 
 
 if __name__ == "__main__":
 
     #s = sys.stdin.read()
 
-    s='''
-    booleano pepe
-    funcion my_function : 5
+    s='''funcion my_function : 5
  inicio
     escriba "I wanna return 5"
- fin
-    '''
+ fin'''
 
     i = 0
     fraselexica = []
@@ -939,7 +1099,6 @@ if __name__ == "__main__":
 
     for i in analizador_lexico(s):
         fraselexica.append(i)
-        print(i)
 
     for i in range (len(fraselexica)):
         entrada.append(fraselexica[i].strip("<>").split(','))
