@@ -128,6 +128,11 @@ def analizador_lexico(frase):
                     resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
                     continue
             if(token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
+                if (token_type == 'multi_line_comment'):
+                    lineas = 1
+                    for caracter in token_value:
+                        if caracter == '\n':
+                            line_num += 1
                 continue
 
             resultado.append(f"<{token_type},{line_num},{column}>")
@@ -139,7 +144,7 @@ def analizador_lexico(frase):
 
 if __name__ == "__main__":
     s = sys.stdin.read()
-    
+
     fraselexica = analizador_lexico(s)
     
     for i in fraselexica:

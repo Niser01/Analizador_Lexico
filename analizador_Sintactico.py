@@ -128,6 +128,11 @@ def analizador_lexico(frase):
                     resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
                     continue
             if(token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
+                if (token_type == 'multi_line_comment'):
+                    lineas = 1
+                    for caracter in token_value:
+                        if caracter == '\n':
+                            line_num += 1
                 continue
 
             resultado.append(f"<{token_type},{line_num},{column}>")
@@ -170,9 +175,49 @@ class AnalizadorSintactico:
         return False
 
     def error(self, expected):
-        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period', 'tkn_colon', 'tkn_plus',
-                'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
+        if self.reservadas() or self.tokens[self.pos][0] in ['tkn_comma', 'tkn_assign', 'tkn_opening_par', 'tkn_opening_bra', 'tkn_closing_bra', 'tkn_closing_par', 'tkn_period',
+         'tkn_colon', 'tkn_plus', 'tkn_minus', 'tkn_times', 'tkn_div', 'tkn_power', 'tkn_neq', 'tkn_leq', 'tkn_less', 'tkn_geq', 'tkn_greater', 'tkn_equal', 'newline']:
             token_actual = self.tokens[self.pos]
+            if token_actual[0] == 'tkn_comma':
+                lexema = '","'
+            if token_actual[0] == 'tkn_assign':
+                lexema = '"<-"'
+            if token_actual[0] == 'tkn_assign':
+                lexema = '"<-"'
+            if token_actual[0] == 'tkn_opening_par':
+                lexema = '"("'
+            if token_actual[0] == 'tkn_opening_bra':
+                lexema = '"["'
+            if token_actual[0] == 'tkn_closing_bra':
+                lexema = '"]"'
+            if token_actual[0] == 'tkn_closing_par':
+                lexema = '")"'
+            if token_actual[0] == 'tkn_period':
+                lexema = '"."'
+            if token_actual[0] == 'tkn_colon':
+                lexema = '":"'
+            if token_actual[0] == 'tkn_plus':
+                lexema = '"+"'
+            if token_actual[0] == 'tkn_minus':
+                lexema = '"-"'
+            if token_actual[0] == 'tkn_times':
+                lexema = '"*"'
+            if token_actual[0] == 'tkn_div':
+                lexema = '"/"'
+            if token_actual[0] == 'tkn_power':
+                lexema = '"^"'
+            if token_actual[0] == 'tkn_neq':
+                lexema = '"<>"'
+            if token_actual[0] == 'tkn_leq':
+                lexema = '"<="'
+            if token_actual[0] == 'tkn_less':
+                lexema = '"<"'
+            if token_actual[0] == 'tkn_geq':
+                lexema = '">="'                                                                                                                                
+            if token_actual[0] == 'tkn_greater':
+                lexema = '">"'
+            if token_actual[0] == 'tkn_equal':
+                lexema = '"="'
             lexema = token_actual[0]
             fila, columna = token_actual[1], token_actual[2]
             mensaje = f"<{fila}:{columna}> Error sintactico: se encontro: {lexema}; se esperaba: {', '.join(expected)}."
@@ -187,8 +232,7 @@ class AnalizadorSintactico:
 
 
     def programa(self):
-
-        
+        #print("INCIO programa: ", self.tokens[self.pos][0], self.pos)
         if self.sentencia():
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
@@ -205,91 +249,63 @@ class AnalizadorSintactico:
         return True
 
 
-    def sentencia(self):
-        
+    def sentencia(self):   
         if self.declaracion():
-            return True
-                    
+            return True              
         if self.bloque_programa():
-            return True
-                    
+            return True            
         if self.EoL():
-            return True
-                    
+            return True              
         if self.asignacion():
-            return True
-                  
+            return True         
         if self.lectura():
             return True
-
         if self.escritura():
-            return True
-                  
+            return True        
         if self.condicional():
             return True
-     
         if self.casos():
-            return True
-                 
+            return True         
         if self.mientras():
             return True
-        
         if self.repita():
-            return True
-                   
+            return True          
         if self.para():
-            return True
-                   
+            return True         
         if self.funcion():
-            return True
-                           
+            return True                  
         if self.procedimiento():
-            return True
-                   
+            return True          
         if self.registro():
-            return True
-                   
+            return True     
         if self.arreglo():
             return True
 
         return False
 
     def sentencia_acciones(self):
-        #print("INICIO sentencia_acciones: ", self.tokens[self.pos][0], self.pos)
         if self.EoL():
             return True
-   
         if self.asignacion():
-            return True
-           
+            return True 
         if self.lectura():
-            return True
-           
+            return True 
         if self.escritura():
-            return True
-           
+            return True  
         if self.condicional():
-            return True
-           
+            return True 
         if self.casos():
-            return True
-           
+            return True  
         if self.mientras():
-            return True
-            
+            return True  
         if self.repita():
-            return True
-             
+            return True    
         if self.para():
-            return True
-            
+            return True 
         if self.arreglo():
-            return True
-            
+            return True  
         if self.llamar():
             return True 
-              
-        #print("FALSO sentencia_acciones: ", self.tokens[self.pos][0], self.pos)
         return False
 
     def llamar(self):
@@ -310,33 +326,75 @@ class AnalizadorSintactico:
 
 
 
-    def declaracion(self):
-        if self.palabras_reservadas():
-            if self.identificador():
-                if self.declaracion_Ciclo():
-                    if self.EoL():
-                        return True
+    def declaracion(self): 
+        self.declaracion_expected.clear()
+        if self.tokens[self.pos][0] == 'cadena':            
+            if self.palabras_reservadas():
+                self.declaracion_expected.append('"tkn_opening_bra"')
+                if self.tokens[self.pos][0] == 'tkn_opening_bra':
+                    self.pos += 1
+                    self.declaracion_expected.pop()
+                    self.declaracion_expected.append('"tkn_integer"')
+                    if self.tokens[self.pos][0] == 'tkn_integer':
+                        self.pos += 1
+                        self.declaracion_expected.pop()
+                        self.declaracion_expected.append('"tkn_closing_bra"')
+                        if self.tokens[self.pos][0] == 'tkn_closing_bra':
+                            self.pos += 1
+                            self.declaracion_expected.pop()
+                            self.declaracion_expected.append('"id"')
+                            if self.identificador():
+                                self.declaracion_expected.pop()
+                                return True
+        else:
+            self.declaracion_expected.append('"entero"')
+            self.declaracion_expected.append('"real"')
+            self.declaracion_expected.append('"booleano"')
+            self.declaracion_expected.append('"caracter"')
+            if self.palabras_reservadas():                
+                self.declaracion_expected.pop()
+                self.declaracion_expected.pop()
+                self.declaracion_expected.pop()
+                self.declaracion_expected.pop()
+                self.declaracion_expected.append('"id"')
+                if self.identificador():
+                    self.declaracion_expected.pop()
+                    if self.declaracion_Ciclo():
+                        
+                        if self.EoL():
+                            return True  
 
+        token_actual = self.tokens[self.pos]
+        self.declaracion_expected.append(token_actual[1])
+        self.declaracion_expected.append(token_actual[2])
         return False
 
     def declaracion_Ciclo(self):
         if self.tokens[self.pos][0] == 'tkn_comma':
             self.pos += 1
             if self.declaracion_Ciclo2():
-                if self.EoL():
-                    return True
-
+                return True
         return True
 
     def declaracion_Ciclo2(self):
+        self.declaracion_expected.append('"entero"')
+        self.declaracion_expected.append('"real"')
+        self.declaracion_expected.append('"booleano"')
+        self.declaracion_expected.append('"caracter"')
         if self.palabras_reservadas():
+            self.declaracion_expected.pop()
+            self.declaracion_expected.pop()
+            self.declaracion_expected.pop()
+            self.declaracion_expected.pop()
+            self.declaracion_expected.append('"id"')
             if self.identificador():
+                self.declaracion_expected.pop()
                 return True
-        if self.palabras_reservadas():
-            return True
+                
+        self.declaracion_expected.append('"id"')
         if self.identificador():
+            self.declaracion_expected.pop()
             return True
-
         return False
 
     def asignacion(self):
@@ -346,7 +404,6 @@ class AnalizadorSintactico:
                 if self.expresion():
                     if self.EoL():
                         return True
-
         return False
 
     def lectura(self):
@@ -398,8 +455,7 @@ class AnalizadorSintactico:
     def identificador(self):
         if self.tokens[self.pos][0] == 'id':
             self.pos += 1
-            return True
-        self.expected.append('"id"')
+            return True           
         return False
 
     def expresion(self):
@@ -410,7 +466,6 @@ class AnalizadorSintactico:
         return False
 
     def expresion_Ciclo(self):
-
         if self.factor_expresion():
             if self.expresion_Ciclo():
                 return True
@@ -465,7 +520,7 @@ class AnalizadorSintactico:
             return True
         if self.tokens[self.pos][0] == 'div':
             self.pos += 1
-            return True
+            return True          
         return False
 
     def EoL(self):
@@ -548,7 +603,6 @@ class AnalizadorSintactico:
 
 
     def condicional(self):
-
         if self.tokens[self.pos][0] == 'si':
             self.pos += 1
             if self.expresion():
@@ -558,7 +612,6 @@ class AnalizadorSintactico:
                         if self.tokens[self.pos][0] == 'fin si':
                             self.pos += 1
                             return True
-
         return False
 
     def sentencia_condicional(self):
@@ -706,43 +759,69 @@ class AnalizadorSintactico:
           return True
         return True
 
-    def funcion(self):
-        
+    def funcion(self):     
+        self.funcion_expected.clear()
+        token_actual = self.tokens[self.pos]
+    
         if self.tokens[self.pos][0] == 'funcion':
-            self.pos += 1            
+            self.pos += 1   
+            self.funcion_expected.append('"id"')
+            token_actual = self.tokens[self.pos]         
             if self.identificador():
+                self.funcion_expected.pop()
+                token_actual = self.tokens[self.pos]
                 if self.funcion_Ciclo():  
-                    print("POS funcion_Ciclo: ", self.tokens[self.pos][0], self.pos, self.expected)                  
+                    self.funcion_expected.append('"inicio"')
+                    token_actual = self.tokens[self.pos]
                     if self.tokens[self.pos][0] == 'inicio':
                         self.pos += 1
+                        self.funcion_expected.pop()
+                        token_actual = self.tokens[self.pos]
                         if self.acciones_funcion():
+                            self.funcion_expected.append('"fin"')
+                            token_actual = self.tokens[self.pos]
                             if self.tokens[self.pos][0] == 'fin':
                                 self.pos += 1
-                                self.expected.clear()
+                                self.funcion_expected.pop()  
+                                token_actual = self.tokens[self.pos]                      
                                 return True
+
+        token_actual = self.tokens[self.pos + 1]
+        self.funcion_expected.append(token_actual[1])
+        self.funcion_expected.append(token_actual[2])
 
         return False
 
     def funcion_Ciclo(self):
         
         if self.parametros_ciclo_funcion():
-            self.expected.append('"tkn_colon"')
+            self.funcion_expected.append('"tkn_colon"')
             if self.tokens[self.pos][0] == 'tkn_colon':
                 self.pos += 1
-                self.expected.pop()
+                self.funcion_expected.pop()
 
-                self.expected.append('"booleano"')
-                self.expected.append('"cadena"')
-                self.expected.append('"caracter"')
-                self.expected.append('"entero"')
-                self.expected.append('"id"')
-                self.expected.append('"real"')                
+                self.funcion_expected.append('"booleano"')
+                self.funcion_expected.append('"cadena"')
+                self.funcion_expected.append('"caracter"')
+                self.funcion_expected.append('"entero"')
+                self.funcion_expected.append('"id"')
+                self.funcion_expected.append('"real"')                
                 if self.palabras_reservadas():
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
                     return True
                 if self.identificador():
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
+                    self.funcion_expected.pop()
                     return True    
-                self.expected.pop()
-
         return False
 
     def parametros_ciclo_funcion(self):
@@ -820,17 +899,39 @@ class AnalizadorSintactico:
         if self.programa():          	
             print("El analisis sintactico ha finalizado exitosamente.",end="")
         else:
-            self.error(self.expected)
+            print(self.declaracion_expected)                       
+            #print(self.bloque_programa_expected)                           
+            #print(self.EoL_expected)                   
+            #print(self.asignacion_expected)                
+            #print(self.lectura_expected) 
+            #print(self.escritura_expected)               
+            #print(self.condicional_expected) 
+            #print(self.casos_expected)
+            #print(self.mientras_expected) 
+            #print(self.repita_expected)                 
+            #print(self.para_expected)               
+            print(self.funcion_expected)                       
+            #print(self.procedimiento_expected)
+            #print(self.registro_expected)                 
+            #print(self.arreglo_expected) 
+
+
+
+
+            self.error(self.declaracion_expected)
 
 
 if __name__ == "__main__":
 
     #s = sys.stdin.read()
 
-    s='''funcion my_function : 5
+    s='''
+    booleano pepe
+    funcion my_function : 5
  inicio
     escriba "I wanna return 5"
- fin'''
+ fin
+    '''
 
     i = 0
     fraselexica = []
@@ -838,6 +939,7 @@ if __name__ == "__main__":
 
     for i in analizador_lexico(s):
         fraselexica.append(i)
+        print(i)
 
     for i in range (len(fraselexica)):
         entrada.append(fraselexica[i].strip("<>").split(','))
