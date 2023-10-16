@@ -1,4 +1,3 @@
-# @title Texto de título predeterminado
 import sys
 from typing import NamedTuple
 import re
@@ -21,10 +20,11 @@ def analizador_lexico(frase):
         ('tkn_real', r'\d+\.\d+|\d+'),
         ('tkn_assign', r'<-'),
         ('close_fin', r'[Ff]in [Ss]i'),
-        ('close_caso', r'[Ff]in  [Cc]aso'),
-        ('close_mientras', r'[Ff]in  [Mm]ientras'),
+        ('close_caso', r'[Ff]in [Cc]aso'),
+        ('close_mientras', r'[Ff]in [Mm]ientras'),
         ('close_para', r'[Ff]in [Pp]ara'),
         ('close_registro', r'[Ff]in [Rr]egistro'),
+        ('nueva_linea', r'nueva_linea'),
         ('id', r'[A-Za-z_0-9]+'),
         ('tkn_str', r'"[^"]*"'),
         ('tkn_period', r'\.'),
@@ -47,7 +47,7 @@ def analizador_lexico(frase):
         ('tkn_equal', r'\='),
         ('tkn_char', r"'(.)'"),
         ('skip', r'[ \t]+'),
-        ('newline', r'\n'),
+        ('newline', r'\n'),        
         ('NiF', r'.'),
     ]
 
@@ -62,7 +62,7 @@ def analizador_lexico(frase):
         token_type = mo.lastgroup
         token_value = mo.group()
         column = (mo.start()+1) - line_start
-        if(token_type == 'id' or token_type == 'close_fin' or token_type == 'close_caso' or token_type == 'close_mientras' or token_type == 'close_para' or token_type == 'close_registro'):
+        if(token_type == 'close_fin' or token_type == 'close_caso' or token_type == 'close_mientras' or token_type == 'close_para' or token_type == 'close_registro' or token_type == 'id'):
             token_value = token_value.lower()
             if(token_value in palabras_reservadas):
               resultado.append(f"<{token_value},{line_num},{column}>")
@@ -75,7 +75,8 @@ def analizador_lexico(frase):
                     next_token_type = next_token.lastgroup
                     next_token_value = next_token.group()
                     next_column = (next_token.start() + 1) - next_line_start
-                    if next_token_type == 'newline':
+                    if token_type == 'newline' or token_type == 'nueva_linea':
+                      token_type = 'newline'
                       resultado.append(f"<{token_type},{line_num},{column}>")
                       next_line_start = next_token.end()
                       next_line_num += 1
@@ -88,7 +89,7 @@ def analizador_lexico(frase):
                       continue
                     if not (next_token_type == 'newline' or next_token_type == 'skip' or token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
                       resultado.append(f'>>> Error lexico (linea: {next_line_num}, posicion: {next_column})')
-                      return None
+                      return resultado
                   except StopIteration:
                     a = False
                     pass
@@ -96,7 +97,8 @@ def analizador_lexico(frase):
             resultado.append(f"<{token_type},{token_value},{line_num},{column}>")
             continue
 
-        elif token_type == 'newline':
+        elif token_type == 'newline' or token_type == 'nueva_linea':
+            token_type = 'newline'
             resultado.append(f"<{token_type},{line_num},{column}>")
             line_start = mo.end()
             line_num += 1
@@ -105,7 +107,7 @@ def analizador_lexico(frase):
             continue
         elif token_type == 'NiF':
             resultado.append(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
-            return None
+            return resultado
         else:
             if(token_type == 'tkn_char'):
                 resultado.append(f"<{token_type},{token_value[1]},{line_num},{column}>")
@@ -114,7 +116,7 @@ def analizador_lexico(frase):
                 n=len(token_value)
                 if('\n' in token_value):
                   resultado.append(f'>>> Error lexico (linea: {line_num}, posicion: {column})')
-                  return None
+                  return resultado
                 resultado.append(repr(f"<{token_type},{token_value[1:(n-1)]},{line_num},{column}>")[1:-1])
                 continue
             if(token_type == 'tkn_real'):
@@ -127,6 +129,7 @@ def analizador_lexico(frase):
                     continue
             if(token_type == 'one_line_comment' or token_type == 'multi_line_comment'):
                 continue
+
             resultado.append(f"<{token_type},{line_num},{column}>")
             continue
     resultado.append(f"<EOF>")
@@ -165,14 +168,14 @@ class AnalizadorSintactico:
             lexema = token_actual[1]
             fila, columna = token_actual[2], token_actual[3]
             mensaje = f"<{fila}:{columna}> Error sintactico: se encontro: {lexema}; se esperaba: {', '.join(expected)}."
-        print(mensaje)
+        print(mensaje,end="")
         exit()
 
 
 
     def programa(self):
 
-        #print("INICIO programa: ", self.tokens[self.pos][0], self.pos)
+        
         if self.sentencia():
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
@@ -225,6 +228,7 @@ class AnalizadorSintactico:
         return False
 
     def sentencia_acciones(self):
+        #print("INICIO sentencia_acciones: ", self.tokens[self.pos][0], self.pos)
         if self.EoL():
             return True
         if self.asignacion():
@@ -245,7 +249,28 @@ class AnalizadorSintactico:
             return True
         if self.arreglo():
             return True
+        if self.llamar():
+            return True            
+        #print("FALSO sentencia_acciones: ", self.tokens[self.pos][0], self.pos)
         return False
+
+    def llamar(self):
+        if self.tokens[self.pos][0] == 'llamar':
+            self.pos += 1
+            if self.llamar_procedimiento():
+                return True
+        return False                
+
+
+    def llamar_procedimiento(self):            
+        if self.EoL():
+            return True
+        if self.identificador():
+            if self.expresion():
+                return True
+        return True            
+
+
 
     def declaracion(self):
         if self.palabras_reservadas():
@@ -383,9 +408,6 @@ class AnalizadorSintactico:
             self.pos += 1
             return True
         if self.tokens[self.pos][0] == 'falso':
-            self.pos += 1
-            return True
-        if self.tokens[self.pos][0] == 'llamar':
             self.pos += 1
             return True
         if self.tokens[self.pos][0] == 'y':
@@ -572,7 +594,7 @@ class AnalizadorSintactico:
             return True
         return True
 
-    def mientras(self):
+    def mientras(self):        
         if self.tokens[self.pos][0] == 'mientras':
             self.pos += 1
             if self.expresion():
@@ -748,19 +770,14 @@ class AnalizadorSintactico:
 
 if __name__ == "__main__":
 
-    #s = sys.stdin.read()
-    
-    s='''funcion my_function : 5
- inicio
-    escriba "I wanna return 5"
- fin'''
+    s = sys.stdin.read()
 
     i = 0
     fraselexica = []
     entrada = []
 
     for i in analizador_lexico(s):
-       fraselexica.append(i)
+        fraselexica.append(i)
 
     for i in range (len(fraselexica)):
         entrada.append(fraselexica[i].strip("<>").split(','))
