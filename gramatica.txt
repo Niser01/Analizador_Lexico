@@ -1,69 +1,50 @@
-1. programa → sentencia programa_Funcion EOF
-2. programa_Funcion → EoL programa | ε
-3. sentencia → declaración | bloque_programa | asignación | lectura | escritura | condicional | casos | mientras | repita | para | funcion | procedimiento | registro | arreglo | EoL 
-
-4. declaración → palabras_reservadas identificador declaración_Ciclo EoL
-5. declaración_Ciclo → token_Coma declaración_Ciclo2 EoL | ε
-6. declaración_Ciclo2 → palabras_reservadas | identificador | (palabras_reservadas identificador)
-
-7. asignación → identificador tkn_assign expresión EoL
-
-8. lectura → 'lea' lectura_Ciclo
-9. lectura_Ciclo → identificador token EoL lectura_Ciclo | ε
-
-10. escritura → 'escriba' escritura_Ciclo
-11. escritura_Ciclo → identificador token palabras_reservadas EoL escritura_Ciclo | ε
-
-12. identificador → id
-
-13. expresión → factor_expresión expresión_Ciclo
-14. expresión_Ciclo → factor_expresión expresión_Ciclo_Prime
-15. expresión_Ciclo_Prime → factor_expresión expresión_Ciclo_Prime | ε
-16. factor_expresión → token | identificador | palabras_reservadas | expresión
-
-16. palabras_reservadas → 'inicio' | 'fin' | 'entero' | 'real' | 'booleano' | 'caracter' | 'cadena' | 'verdadero' | 'falso' | 'escriba' | 'lea' | 'llamar' | 'si' | 'sino' | 'y' | 'o' | 'mod' | 'caso' | 'mientras' | 'haga' | 'repita' | 'hasta' | 'para' | 'procedimiento' | 'var' | 'retorne' | 'funcion' | 'nueva_linea' | 'registro' | 'arreglo' | 'de' | 'entonces' | 'div' | 'fin si' | 'fin caso' | 'fin mientras' |'fin para'| 'fin registro'
-
-17. EoL → 'newline'
-
-18. token → 'tkn_comma' | 'tkn_assign' | 'tkn_real' | 'tkn_integer' | 'tkn_str' | 'tkn_opening_par' | 'tkn_opening_bra' | 'tkn_closing_bra' | 'tkn_closing_par' | 'tkn_period' | 'tkn_colon' | 'tkn_plus' | 'tkn_minus' | 'tkn_times' | 'tkn_div' | 'tkn_power' | 'tkn_neq' | 'tkn_leq' | 'tkn_less' | 'tkn_geq' | 'tkn_greater' | 'tkn_equal' | 'tkn_char' 
-
-19. condicional → 'si' expresión 'entonces' sentencia_condicional 'fin si'
-20. sentencia_condicional → sentencia_condicional_Ciclo | sentencia_acciones
-21. sentencia_condicional_Ciclo → 'sino' sentencia_acciones sentencia_condicional_Ciclo | ε
-
-22. casos → 'caso' valor_caso 'tkn_colon' bloque_codigo_caso 'sino' bloque_codigo_caso 'fin caso'
-23. valor_caso → id_casos_Ciclo valor_caso_tail | ε
-24. valor_caso_tail → 'tkn_comma' id_casos_Ciclo valor_caso_tail | ε
-25. id_casos_Ciclo → 'tkn_integer' | 'tkn_real'
-26. bloque_codigo_caso → sentencia_acciones | ε
-
-27. mientras → 'mientras' expresión 'haga' ciclo_mientras 'fin mientras'
-28. ciclo_mientras → sentencia_acciones ciclo_mientras | ε
-
-30. repita → 'repita' ciclo_repita 'hasta' expresión
-31. ciclo_repita → sentencia_acciones ciclo_repita_Ciclo | ε
-
-33. para → 'para' expresión 'hasta' expresión 'haga' ciclo_para 'fin para'
-34. ciclo_para → sentencia_acciones ciclo_para | ε
-
-36. procedimiento → 'procedimiento' identificador procedimiento_Ciclo 'inicio' acciones_procedimiento 'fin'
-37. procedimiento_Ciclo → sentencia_acciones procedimiento_Ciclo | ε
-38. acciones_procedimiento → sentencia_acciones acciones_procedimiento | ε
-
-39. funcion → 'funcion' identificador funcion_Ciclo 'inicio' acciones_funcion 'fin'
-40. funcion_Ciclo → declaracion_ciclo_funcion tkn_colon palabras_reservadas | ε
-41. declaracion_ciclo_funcion → declaracion declaracion_ciclo_funcion | ε
-42. acciones_funcion → sentencia_acciones acciones_funcion | ε
-
-41. registro → 'registro' identificador registro_Ciclo 'fin'
-42. registro_Ciclo → declaración registro_Ciclo | ε
-
-43. arreglo → 'arreglo' arreglo_Def
-44. arreglo_Def → 'tkn_opening_bra' 'tkn_integer' 'tkn_closing_bra' 'de' palabras_reservadas identificador arreglo_Def | ε
-
-45. bloque_programa → 'inicio' bloque_programa_Ciclo 'fin'
-46. bloque_programa_Ciclo → sentencia_acciones bloque_programa_Ciclo | ε
-
-47. sentencia_acciones → asignación | lectura | escritura | condicional | casos | mientras | repita | para | EoL
-
-
+programa               -> sentencia programa_Funcion
+programa_Funcion       -> EoL programa | programa
+sentencia              -> declaracion | bloque_programa | EoL | asignacion | lectura | escritura | condicional | casos | mientras | repita | para | funcion | procedimiento | registro | arreglo
+sentencia_acciones     -> EoL | asignacion | lectura | escritura | condicional | casos | mientras | repita | para | arreglo | llamar
+llamar                 -> 'llamar' llamar_procedimiento
+llamar_procedimiento   -> EoL | identificador expresion
+declaracion            -> palabras_reservadas identificador declaracion_Ciclo EoL
+declaracion_Ciclo      -> ',' declaracion_Ciclo2 EoL
+declaracion_Ciclo2     -> palabras_reservadas identificador EoL | palabras_reservadas EoL | identificador EoL
+asignacion             -> identificador '=' expresion EoL
+lectura                -> 'lea' lectura_Ciclo EoL
+lectura_Ciclo          -> identificador token lectura_Ciclo EoL | EoL
+escritura              -> 'escriba' escritura_Ciclo EoL
+escritura_Ciclo        -> identificador token palabras_reservadas escritura_Ciclo EoL | identificador escritura_Ciclo EoL | token escritura_Ciclo EoL | palabras_reservadas escritura_Ciclo EoL | identificador EoL
+identificador          -> 'id'
+expresion              -> factor_expresion expresion_Ciclo
+expresion_Ciclo        -> factor_expresion expresion_Ciclo | EoL
+factor_expresion       -> token | identificador | palabras_reservadas
+palabras_reservadas    -> 'entero' | 'real' | 'booleano' | 'caracter' | 'cadena' | 'verdadero' | 'falso' | 'y' | 'o' | 'mod' | 'var' | 'retorne' | 'div'
+EoL                    -> 'newline'
+token                  -> ',' | '=' | 'tkn_real' | 'tkn_integer' | 'tkn_str' | 'tkn_opening_par' | 'tkn_opening_bra' | 'tkn_closing_bra' | 'tkn_closing_par' | 'tkn_period' | 'tkn_colon' | 'tkn_plus' | 'tkn_minus' | 'tkn_times' | 'tkn_div' | 'tkn_power' | 'tkn_neq' | 'tkn_leq' | 'tkn_less' | 'tkn_geq' | 'tkn_greater' | 'tkn_equal' | 'tkn_char'
+condicional            -> 'si' expresion 'entonces' sentencia_condicional 'fin si'
+sentencia_condicional  -> acciones_condicional sentencia_condicional_Ciclo | acciones_condicional
+acciones_condicional    -> sentencia_acciones acciones_condicional
+sentencia_condicional_Ciclo -> 'sino' acciones_condicional sentencia_condicional_Ciclo | EoL
+casos                  -> 'caso' valor_caso ':' bloque_codigo_caso 'sino' bloque_codigo_caso 'fin caso'
+valor_caso             -> id_casos_Ciclo valor_caso_tail | EoL
+valor_caso_tail        -> ',' id_casos_Ciclo valor_caso_tail | EoL
+id_casos_Ciclo         -> 'tkn_integer' | 'tkn_real'
+bloque_codigo_caso     -> sentencia_acciones | EoL
+mientras               -> 'mientras' expresion 'haga' ciclo_mientras 'fin mientras'
+ciclo_mientras         -> sentencia_acciones ciclo_mientras | EoL
+repita                 -> 'repita' ciclo_repita 'hasta' expresion
+ciclo_repita           -> sentencia_acciones ciclo_repita | EoL
+para                   -> 'para' expresion 'hasta' expresion 'haga' ciclo_para 'fin para'
+ciclo_para             -> sentencia_acciones ciclo_para | EoL
+procedimiento          -> 'procedimiento' identificador procedimiento_Ciclo 'inicio' acciones_procedimiento 'fin'
+procedimiento_Ciclo    -> acciones_procedimiento procedimiento_Ciclo | EoL
+acciones_procedimiento  -> sentencia_acciones | EoL
+funcion                -> 'funcion' identificador funcion_Ciclo 'inicio' acciones_funcion 'fin'
+funcion_Ciclo          -> declaracion_ciclo_funcion ':' palabras_reservadas | EoL
+declaracion_ciclo_funcion -> declaracion declaracion_ciclo_funcion | EoL
+acciones_funcion       -> sentencia_acciones acciones_funcion | EoL
+registro               -> 'registro' identificador registro_Ciclo 'fin'
+registro_Ciclo         -> declaracion registro_Ciclo | EoL
+arreglo                -> 'arreglo' arreglo_Def
+arreglo_Def            -> '[' 'tkn_integer' ']' 'de' palabras_reservadas identificador
+bloque_programa        -> 'inicio' bloque_programa_Ciclo 'fin'
+bloque_programa_Ciclo  -> sentencia_acciones bloque_programa_Ciclo | EoL
+analizar               -> programa
