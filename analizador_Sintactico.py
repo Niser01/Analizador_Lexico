@@ -67,6 +67,7 @@ def analizador_lexico(frase):
             if(token_value in palabras_reservadas):
               resultado.append(f"<{token_value},{line_num},{column}>")
               if(token_value=='fin' and column == 1):
+                 resultado.append(f"<EOF,{line_num},{column}>")
                  next_line_num = line_num
                  next_line_start = 0
                  while(a == True):
@@ -137,7 +138,7 @@ def analizador_lexico(frase):
 
             resultado.append(f"<{token_type},{line_num},{column}>")
             continue
-    resultado.append(f"<EOF,{line_num},{column}>")
+    resultado.append(f"<EOF,{line_num + 1},{1}>")
     return resultado
 
 
@@ -163,6 +164,17 @@ class AnalizadorSintactico:
         return False
 
     def error(self, metodo, submetodo):
+
+        if metodo == "programa":
+            if submetodo == "EOF":
+                self.expected.append('"final de archivo"')
+
+        if metodo == "sentencia":
+            if submetodo == "conjunto":
+                expected = ['"arreglo"', '"booleano"', '"cadena"', '"caracter"', '"entero"', '"funcion"', '"id"', '"inicio"', '"procedimiento"', '"real"', '"registro"']                
+                for i in expected:
+                    self.expected.append(i)
+                          
         if metodo == "condicional":
             if submetodo == "expresion":
                 expected = ['"cadena_de_caracteres"', '"caracter_simple"', '"falso"', '"id"', '"mod"', '"o"', '"("', '")"', '"*"', '"+"', '"-"', '"."', '"/"', '"<"', '"<="', '"<>"', '"="', '">"', '">="', '"]"', '"valor_entero"', '"valor_real"', '"var"', '"verdadero"', '"y"']                
@@ -258,7 +270,9 @@ class AnalizadorSintactico:
 
         if metodo == "funcion":            
             if submetodo == "inicio":
-                self.expected.append('"inicio"')
+                expected = ['"arreglo"', '"booleano"', '"cadena"', '"caracter"', '"entero"', '"id"', '"inicio"', '"real"']
+                for i in expected:
+                    self.expected.append(i) 
             if submetodo == "fin":
                 self.expected.append('"fin"')
             if submetodo == "identificador":
@@ -279,47 +293,47 @@ class AnalizadorSintactico:
             
             
             if token_actual[0] == 'tkn_comma':
-                lexema = '","'
+                lexema = ','
             if token_actual[0] == 'tkn_assign':
-                lexema = '"<-"'
-            if token_actual[0] == 'tkn_assign':
-                lexema = '"<-"'
+                lexema = '<-'
             if token_actual[0] == 'tkn_opening_par':
-                lexema = '"("'
+                lexema = '('
             if token_actual[0] == 'tkn_opening_bra':
-                lexema = '"["'
+                lexema = '['
             if token_actual[0] == 'tkn_closing_bra':
-                lexema = '"]"'
+                lexema = ']'
             if token_actual[0] == 'tkn_closing_par':
-                lexema = '")"'
+                lexema = ')'
             if token_actual[0] == 'tkn_period':
-                lexema = '"."'
+                lexema = '.'
             if token_actual[0] == 'tkn_colon':
-                lexema = '":"'
+                lexema = ':'
             if token_actual[0] == 'tkn_plus':
-                lexema = '"+"'
+                lexema = '+'
             if token_actual[0] == 'tkn_minus':
-                lexema = '"-"'
+                lexema = '-'
             if token_actual[0] == 'tkn_times':
-                lexema = '"*"'
+                lexema = '*'
             if token_actual[0] == 'tkn_div':
-                lexema = '"/"'
+                lexema = '/'
             if token_actual[0] == 'tkn_power':
-                lexema = '"^"'
+                lexema = '^'
             if token_actual[0] == 'tkn_neq':
-                lexema = '"<>"'
+                lexema = '<>'
             if token_actual[0] == 'tkn_leq':
-                lexema = '"<="'
+                lexema = '<='
             if token_actual[0] == 'tkn_less':
-                lexema = '"<"'
+                lexema = '<'
             if token_actual[0] == 'tkn_geq':
-                lexema = '">="'                                                                                                                                
+                lexema = '>='                                                                                                                                
             if token_actual[0] == 'tkn_greater':
-                lexema = '">"'
+                lexema = '>'
             if token_actual[0] == 'tkn_equal':
-                lexema = '"="'            
+                lexema = '=' 
+            if token_actual[0] == 'EOF':
+                lexema = '"final de archivo"'               
             fila, columna = token_actual[1], token_actual[2]
-            mensaje = f"<{fila}:{columna}> Error sintactico: se encontro: {lexema}; se esperaba: {', '.join(self.expected)}."
+            mensaje = f"<{fila}:{columna}> Error sintactico: se encontro: \"{lexema}\"; se esperaba: {', '.join(self.expected)}."
         else:
             lexema = token_actual[1]
             fila, columna = token_actual[2], token_actual[3]
@@ -335,6 +349,7 @@ class AnalizadorSintactico:
             if self.programa_Funcion():
                 if self.tokens[self.pos][0] == 'EOF':
                     return True
+                self.error("programa", "EOF")     
         return False
 
     def programa_Funcion(self):
@@ -343,34 +358,17 @@ class AnalizadorSintactico:
                 return True
         if self.programa():
                 return True
-
         return True
 
 
     def sentencia(self):  
-        
+
         if self.declaracion():
             return True              
         if self.bloque_programa():
             return True            
         if self.EoL():
-            return True              
-        if self.asignacion():
-            return True         
-        if self.lectura():
-            return True
-        if self.escritura():
-            return True        
-        if self.condicional():
-            return True
-        if self.casos():
-            return True         
-        if self.mientras():
-            return True
-        if self.repita():
-            return True          
-        if self.para():
-            return True         
+            return True                     
         if self.funcion():
             return True                  
         if self.procedimiento():
@@ -379,7 +377,10 @@ class AnalizadorSintactico:
             return True     
         if self.arreglo():
             return True
+        if self.tokens[self.pos][0] == 'EOF':
+            return False                
 
+        self.error("sentencia", "conjunto")
         return False
 
     def sentencia_acciones(self):
@@ -401,8 +402,6 @@ class AnalizadorSintactico:
         if self.repita():
             return True    
         if self.para():
-            return True 
-        if self.arreglo():
             return True  
         if self.llamar():
             return True 
@@ -427,7 +426,6 @@ class AnalizadorSintactico:
         return True            
 
     def declaracion(self):  
-        
         if self.tokens[self.pos][0] == 'cadena':            
                 if self.tokens[self.pos][0] == 'tkn_opening_bra':
                     self.pos += 1
@@ -446,10 +444,9 @@ class AnalizadorSintactico:
             if self.palabras_reservadas():                
                 if self.identificador():
                     if self.declaracion_Ciclo():                        
-                        if self.EoL():
-                            return True
-                        self.error("declaracion", "EoL")   
-                self.error("declaracion", "identificador")                                                  
+                        return True  
+                self.error("declaracion", "identificador") 
+                                               
         return False
 
     def declaracion_Ciclo(self):
@@ -916,12 +913,11 @@ class AnalizadorSintactico:
           return True
         return True
 
-    def funcion(self):     
-   
+    def funcion(self):       
         if self.tokens[self.pos][0] == 'funcion':
             self.pos += 1        
             if self.identificador():    
-                if self.funcion_Ciclo():                              
+                if self.funcion_Ciclo():                          
                     if self.tokens[self.pos][0] == 'inicio':
                         self.pos += 1
                         if self.acciones_funcion():
@@ -934,26 +930,34 @@ class AnalizadorSintactico:
         return False
 
     def funcion_Ciclo(self):
-        
         if self.parametros_ciclo_funcion():
             if self.tokens[self.pos][0] == 'tkn_colon':
                 self.pos += 1
                 if self.palabras_reservadas():
-                    return True
+                    if self.funcion_Ciclo_EoL():
+                        return True
                 if self.identificador():
-                    return True
+                    if self.funcion_Ciclo_EoL():
+                        return True
                 self.error("funcion", "palabras_reservadas_identificador")     
             self.error("funcion", "tkn_colon")     
         return False
 
+    def funcion_Ciclo_EoL(self):    
+        if self.EoL():
+            if self.funcion_Ciclo_EoL():
+                return True
+        return True
+
     def parametros_ciclo_funcion(self):
         if self.tokens[self.pos][0] == 'tkn_opening_par':
+            self.pos += 1
             if self.declaracion():
                 if self.tokens[self.pos][0] == 'tkn_closing_par':
-                   return True
+                    self.pos += 1
+                    return True
                 self.error("funcion", "tkn_closing_par")   
             self.error("funcion", "declaracion")
-            
         if self.declaracion():
             return True                   
         return True
@@ -1020,7 +1024,6 @@ class AnalizadorSintactico:
 
 
     def analizar(self):
-
         if self.programa():          	
             print("El analisis sintactico ha finalizado exitosamente.",end="")
 
