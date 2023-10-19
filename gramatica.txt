@@ -1,76 +1,87 @@
-programa -> sentencia programa_Funcion
-programa_Funcion -> EoL programa | programa | error
+1. programa -> sentencia programa_Funcion EOF | error
+2. programa_Funcion -> EoL programa | programa | ε
 
-sentencia -> declaracion | bloque_programa | EoL | asignacion | lectura | escritura | condicional | casos | mientras | repita | para | funcion | procedimiento | registro | arreglo | error
+3. sentencia -> declaracion | bloque_programa | EoL | funcion | procedimiento | registro | EOF | error
 
-sentencia_acciones -> EoL | asignacion | lectura | escritura | condicional | casos | mientras | repita | para | arreglo | llamar | error
+4. sentencia_acciones -> EoL | asignacion | lectura | escritura | condicional | casos | mientras | repita | para | llamar | retorne | error | ε
 
-llamar -> 'llamar' llamar_procedimiento | error
-llamar_procedimiento -> EoL | identificador expresion | error
+5. retorne -> 'retorne' retorne_Ciclo EoL | error
+6. retorne_Ciclo -> identificador token (palabras_reservadas | token | identificador) retorne_Ciclo | identificador retorne_Ciclo | token retorne_Ciclo  | palabras_reservadas retorne_Ciclo | ε
 
-declaracion -> 'cadena' palabras_reservadas '[' 'entero' ']' identificador | palabras_reservadas identificador declaracion_Ciclo EoL | error
+7. llamar -> 'llamar' llamar_procedimiento
+8. llamar_procedimiento -> EoL | identificador expresion | error | ε
 
-declaracion_Ciclo -> ',' declaracion_Ciclo2 | error
-declaracion_Ciclo2 -> palabras_reservadas identificador | identificador | error
+9. declaracion -> ( 'cadena' 'tkn_opening_bra' 'tkn_integer' 'tkn_closing_bra' identificador cadena_MULT_id | error) | ( 'arreglo' 'tkn_opening_bra' declaracion_arreglo 'tkn_closing_bra' 'de' tipo_de_dato_declaracion identificador | error) | ( 'cadena' identificador declaracion_Ciclo | error) | ( 'var' tipo_de_dato_declaracion identificador | error) | ( tipo_de_dato identificador declaracion_Ciclo | error) | ( identificador identificador declaracion_Ciclo | error)
+10. cadena_MULT_id -> 'tkn_comma' identificador cadena_MULT_id | error | ε
+11. tipo_de_dato_declaracion -> ( tipo_de_dato ) | ( 'cadena' 'tkn_opening_bra' 'tkn_integer' 'tkn_closing_bra' | error) | ( 'arreglo' 'tkn_opening_bra' declaracion_arreglo 'tkn_closing_bra' | error)
+12. declaracion_arreglo -> 'tkn_integer' declaracion_arreglo_multiple | error
+13. declaracion_arreglo_multiple -> 'tkn_comma' 'tkn_integer' declaracion_arreglo_multiple | ε
+14. declaracion_Ciclo -> 'tkn_comma' EoL declaracion_Ciclo2 | ε
+15. declaracion_Ciclo2 -> ( palabras_reservadas identificador | error) | ( identificador | error)
 
-asignacion -> identificador '<-' expresion EoL | error
+16. asignacion -> asignacionid 'tkn_assign' expresion EoL | error
+17. asignacionid -> (identificador asignacionid_multiple) | (identificador asignacionid_arreglos) | (identificador asignacionid_registros) | identificador
+18. asignacionid_registros -> 'tkn_period' identificador | error
+19. asignacionid_arreglos -> 'tkn_opening_bra' tipoDato_asignacion 'tkn_closing_bra' | error
+20. tipoDato_asignacion -> ('tkn_integer' declaracion_arreglo_multiple) | identificador | error
+21. tipoDato_asignacion_multiple -> 'tkn_comma' 'tkn_integer' declaracion_arreglo_multiple | ε
+22. asignacionid_multiple -> 'tkn_comma' identificador asignacionid_multiple | error
 
-lectura -> 'lea' lectura_Ciclo EoL | error
-lectura_Ciclo -> identificador token lectura_Ciclo | identificador lectura_Ciclo | token lectura_Ciclo | palabras_reservadas lectura_Ciclo | error
+23. lectura -> 'lea' lectura_Ciclo EoL | error
+24. lectura_Ciclo -> (identificador lectura_multiple) | (identificador lectura_multiple_Metodos) | identificador | error
+25. lectura_multiple -> 'tkn_comma' identificador lectura_multiple | error | ε
+26. lectura_multiple_Metodos -> 'tkn_period' identificador | error | ε
 
-escritura -> 'escriba' escritura_Ciclo EoL | error
-escritura_Ciclo -> identificador token palabras_reservadas escritura_Ciclo | identificador escritura_Ciclo | token escritura_Ciclo | palabras_reservadas escritura_Ciclo | error
+27. escritura -> 'escriba' escritura_Ciclo EoL | error
+28. escritura_Ciclo -> identificador token (identificador | token) escritura_Ciclo | identificador escritura_Ciclo | token escritura_Ciclo | 'newline' | error
+29. escritura_Ciclo_EoL -> EoL escritura_Ciclo_EoL | ε
 
-identificador -> 'id'
+30. identificador -> 'id'
 
-expresion -> expresion_Ciclo
-expresion_Ciclo -> factor_expresion expresion_Ciclo | error
+31. expresion -> expresion_Ciclo | error
+32. expresion_Ciclo -> factor_expresion expresion_Ciclo | ε
+33. factor_expresion -> 'tkn_opening_par' expresion 'tkn_closing_par' | 'tkn_opening_bra' expresion 'tkn_closing_bra' | token | identificador | palabras_reservadas 
 
-factor_expresion -> '(' expresion ')' | '[' expresion ']' | token | identificador | palabras_reservadas | error
+34. tipo_de_dato -> 'booleano' | 'caracter' | 'entero' | 'real' 
+35. palabras_reservadas -> 'booleano' | 'caracter' | 'div' | 'entero' | 'falso' | 'mod' | 'o' | 'real' | 'retorne' | 'mod' | 'var' | 'verdadero' | 'y' | 'llamar'
 
-palabras_reservadas -> 'entero' | 'real' | 'booleano' | 'caracter' | 'cadena' | 'verdadero' | 'falso' | 'y' | 'u' | 'mod' | 'var' | 'retorne' | 'div'
+36. EoL -> 'newline'
 
-EoL -> 'newline'
+37. token -> 'tkn_assign' | 'tkn_char' | 'tkn_closing_bra' | 'tkn_closing_par' | 'tkn_colon' | 'tkn_comma' | 'tkn_div' | 'tkn_equal' | 'tkn_geq' | 'tkn_greater' | 'tkn_integer' | 'tkn_leq' | 'tkn_less' | 'tkn_minus' | 'tkn_opening_bra' | 'tkn_opening_par' | 'tkn_period' | 'tkn_plus' | 'tkn_power' | 'tkn_real' | 'tkn_str' | 'tkn_times' | 'tkn_neq'
 
-token -> ',' | '<-' | 'tkn_real' | 'tkn_integer' | 'tkn_str' | '(' | '[' | ']' | ')' | '.' | ':' | '+' | '-' | '*' | '/' | '^' | '<>' | '<=' | '<' | '>=' | '>' | '=' | 'tkn_char'
+38. condicional -> 'si' expresion 'entonces' EoL sentencia_condicional 'fin si' | error
+39. sentencia_condicional -> acciones_condicional sentencia_condicional_Sino | acciones_condicional
+40. acciones_condicional -> sentencia_acciones acciones_condicional | ε
+41. sentencia_condicional_Sino -> 'sino' acciones_condicional 
 
-condicional -> 'si' expresion 'entonces' sentencia_condicional 'fin si'
-sentencia_condicional -> acciones_condicional sentencia_condicional_Ciclo | acciones_condicional
-acciones_condicional -> sentencia_acciones acciones_condicional | error | e
-sentencia_condicional_Sino -> 'sino' acciones_condicional 
+42. casos -> 'caso' identificador EoL bloque_codigo_caso 'sino' 'tkn_colon' EoL bloque_codigo_caso_sino EoL 'fin caso' | error
+43. valor_caso -> 'tkn_integer' valor_caso_tail | error
+44. valor_caso_tail -> 'tkn_comma'  'tkn_integer' valor_caso_tail | error | ε
+45. bloque_codigo_caso -> valor_caso 'tkn_colon' EoL sentencia_acciones bloque_codigo_caso | ε
+46. bloque_codigo_caso_sino -> sentencia_acciones bloque_codigo_caso | ε
 
-casos -> 'caso' valor_caso ':' bloque_codigo_caso 'sino' bloque_codigo_caso 'fin caso'
-valor_caso -> id_casos_Ciclo valor_caso_tail | error
-valor_caso_tail -> ',' id_casos_Ciclo valor_caso_tail | EoL
-id_casos_Ciclo -> 'tkn_integer' | 'tkn_real'
+47. mientras -> 'mientras' expresion 'haga' EoL ciclo_mientras 'fin mientras' | error
+48. ciclo_mientras -> sentencia_acciones ciclo_mientras | ε
 
-bloque_codigo_caso -> sentencia_acciones | EoL | error
+49. repita -> 'repita' ciclo_repita 'hasta' expresion | error
+50. ciclo_repita -> sentencia_acciones ciclo_repita | ε
 
-mientras -> 'mientras' expresion 'haga' ciclo_mientras 'fin mientras'
-ciclo_mientras -> sentencia_acciones ciclo_mientras | EoL | error
+51. para -> 'para' expresion 'hasta' expresion 'haga' ciclo_para 'fin para' | error
+52. ciclo_para -> sentencia_acciones ciclo_para | ε
 
-repita -> 'repita' ciclo_repita 'hasta' expresion
-ciclo_repita -> sentencia_acciones ciclo_repita | EoL | error
+53. procedimiento -> 'procedimiento' identificador EoL parametros_procedimiento EoL 'inicio' EoL procedimiento_Ciclo 'fin' | error
+54. parametros_procedimiento -> ('tkn_opening_par' declaracion MULT_parametros_procedimiento 'tkn_closing_par') | declaracion | EoL | error
+55. MULT_parametros_procedimiento -> 'tkn_comma' declaracion MULT_parametros_procedimiento | ε
+56. procedimiento_Ciclo -> sentencia_acciones procedimiento_Ciclo | error | ε
 
-para -> 'para' expresion 'hasta' expresion 'haga' ciclo_para 'fin para'
-ciclo_para -> sentencia_acciones ciclo_para | EoL | error
+57. funcion -> 'funcion' identificador funcion_Ciclo 'inicio' acciones_funcion 'fin' | error
+58. funcion_Ciclo -> parametros_ciclo_funcion 'tkn_colon' (palabras_reservadas EoL | identificador EoL | 'cadena' 'tkn_opening_bra' 'tkn_integer' 'tkn_closing_bra' EoL) | error
+59. parametros_ciclo_funcion -> 'tkn_opening_par' declaracion MULT_parametros_ciclo_funcion 'tkn_closing_par' | declaracion | EoL | error
+60. MULT_parametros_ciclo_funcion -> 'tkn_comma' declaracion MULT_parametros_ciclo_funcion | ε
+61. acciones_funcion -> sentencia_acciones EoL acciones_funcion | ε
 
-procedimiento -> 'procedimiento' identificador procedimiento_Ciclo 'inicio' acciones_procedimiento 'fin'
-procedimiento_Ciclo -> acciones_procedimiento procedimiento_Ciclo | EoL | error
+62. registro -> 'registro' identificador EoL registro_Ciclo 'fin registro' | error
+63. registro_Ciclo -> declaracion EoL registro_Ciclo | ε
 
-acciones_procedimiento -> sentencia_acciones acciones_procedimiento | EoL | error
-
-funcion -> 'funcion' identificador funcion_Ciclo 'inicio' acciones_funcion 'fin'
-funcion_Ciclo -> parametros_ciclo_funcion ':' palabras_reservadas | parametros_ciclo_funcion | error
-parametros_ciclo_funcion -> '(' declaracion ')' | declaracion | error
-
-acciones_funcion -> sentencia_acciones acciones_funcion | EoL | error
-
-registro -> 'registro' identificador registro_Ciclo 'fin'
-registro_Ciclo -> declaracion registro_Ciclo | EoL | error
-
-arreglo -> 'arreglo' arreglo_Def
-arreglo_Def -> '[' 'tkn_integer' ']' 'de' palabras_reservadas | identificador | error
-
-bloque_programa -> 'inicio' bloque_programa_Ciclo 'fin'
-bloque_programa_Ciclo -> sentencia_acciones bloque_programa_Ciclo | EoL | error
+64. bloque_programa -> 'inicio' bloque_programa_Ciclo 'fin' | error
+65. bloque_programa_Ciclo -> sentencia_acciones bloque_programa_Ciclo | ε
